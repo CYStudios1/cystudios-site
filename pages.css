@@ -1,0 +1,167 @@
+/* CYStudios: what the Services, About and Contact pages share with the home page (index.html).
+   One face, one size for everything you read, two strengths (full ink, and the 62% grey that "This is" uses on home), and one periwinkle: the full stop, and anything that reaches us.
+   Sharp rectangles, the same frosted bar, and the print dots. */
+
+@view-transition { navigation: auto; }      /* going between pages, the bar stays where it is and the rest of the page fades across */
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .35s; }
+
+:root {
+  --page: #F5F4F0; --ink: #171C0C; --accent: #5F48DA; --accent-light: #A79AEB; --on-accent: var(--page); --wash: #ECE9FB;      /* our violet (periwinkle before it: before-violet-pages.css). Words on it are paper: 5.6 to 1 (ink would be 2.8) */
+  --line: rgba(23, 28, 12, .2);
+  --bar-violet: linear-gradient(180deg, #4C49CB, #7168A1);      /* the badge and Contact in the bar, as on home (paper badge and solid violet Contact before: before-gradient-bar-pages.css) */
+  --grey: color-mix(in srgb, var(--ink) 62%, var(--page));       /* the step-back strength, the same as "We are" / "This is" on the home page */
+  --faint: color-mix(in srgb, var(--ink) 42%, var(--page));      /* what is not yet chosen, and what you have not typed yet */
+  --face: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;      /* from Google Fonts (linked in each page). Kept before it: General Sans in before-inter-pages.css, Author in before-general-pages.css, Satoshi in before-author-pages.css, Instrument Sans in before-satoshi-pages.css, Atkinson Hyperlegible Next in before-instrument-pages.css, Schibsted Grotesk in before-atkinson-pages.css, Inter Tight in before-schibsted-pages.css */
+  --fs: 16px; --lh: calc(var(--fs) + 2px);                       /* every type size is an even number of pixels, each the Inter Tight size rounded down: 18 or 16 for what you read, 16 for the buttons, 14 for the bar and small notes */
+  --m: clamp(16px, round(5vw, 4px), 72px);                                    /* the page's side margin */
+  --edge: 28px; --edge-b: 28px; --top: 24px;
+  --bar: rgba(245, 244, 240, .82); --bar-ink: var(--ink); --bar-blur: blur(20px) saturate(1.5);      /* words pass under the bar here, so its glass is less clear than on home */
+  --bar-h: 70px;                                                  /* where the bar ends; the script measures it */
+}
+@media (min-width: 1000px) { :root { --fs: 18px; } }            /* a wide window: one step larger, as on home */
+@media (max-width: 640px) { :root { --fs: 18px; --edge: 16px; --edge-b: max(16px, env(safe-area-inset-bottom)); --top: max(14px, env(safe-area-inset-top)); } }
+
+* { box-sizing: border-box; }
+html { background: url(assets/hanji.png) 0 0 / 600px 600px, url(assets/hanji-cloud.png) 0 0 / 840px 840px var(--page); scroll-padding-top: calc(var(--bar-h) + 16px); }      /* hanji, as on home (the dust-fleck grain before: before-hanji-pages.css) */
+body { margin: 0; font: 500 var(--fs)/calc(var(--fs) + 8px) var(--face); font-variant-numeric: lining-nums; color: var(--ink); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+a { color: inherit; }
+p, ul, ol, h1, h2, h3 { margin: 0; }
+h1, h2, h3 { font: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+::selection { background: var(--wash); }      /* the violet wash from the brand kit */
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.grey { color: var(--grey); }
+.stop { color: var(--accent); }
+
+/* The soft violet edge, as on home (2026-11-25, the user: "can we apply the glow to the entire site please"; on home alone before: before-glow-pages.css): the window's edges
+   glow gently from inside in our violet, over everything and in the way of nothing. These pages are all our own paper, so it is always on here. */
+body::after { content: ''; position: fixed; inset: 0; z-index: 9; pointer-events: none;
+              box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent), inset 0 0 96px -32px color-mix(in srgb, var(--accent) 26%, transparent); }
+
+/* ---------- the top of the page: no bar, as on home (2026-11-24; the ink bar is in before-no-bar-pages.css). Our violet logo and our pages on the page itself, centred,
+   ink words and Contact in our violet. The page you are on stays turned, in our violet (see below). These pages scroll under it, so a soft fade of paper sits behind it. */
+.nav { position: fixed; left: 50%; bottom: var(--edge-b); transform: translateX(-50%); z-index: 8;      /* at the foot, as on home (at the top before: before-bottom-nav-pages.css) */
+        display: flex; align-items: center; gap: 2px; height: 40px; padding: 4px; view-transition-name: bar;
+       color: var(--ink); font: 500 12px/1 var(--face); white-space: nowrap; max-width: calc(100% - var(--edge) * 2); }
+body::before { content: ''; position: fixed; z-index: 7; left: 0; right: 0; bottom: 0; height: calc(var(--bar-b, 68px) + 44px); pointer-events: none;
+               background: var(--page); -webkit-mask-image: linear-gradient(transparent, #000 44px); mask-image: linear-gradient(transparent, #000 44px); }      /* the words passing under the foot fade away before they reach it */
+body { padding-bottom: calc(var(--bar-b, 68px) + 8px); }      /* so the end of the page can come up above the words */
+.nav .mark { flex: none; display: grid; place-items: center; width: 32px; height: 32px; margin-right: 6px; text-decoration: none; }
+.logo { display: block; width: auto; height: 26px; }      /* our logo: five petal-shaped print dots, in our violet (assets/logo.svg). 26px tall since 2026-11-24 (22px before: before-logo-size-pages.css) */
+.nav .pages { display: flex; align-items: center; gap: 2px; }
+.nav .pages a, .nav .cta { display: flex; align-items: center; height: 32px; padding: 0 12px; text-decoration: none; }
+.nav .cta { margin-left: 6px; }
+.nav .mark { color: var(--accent); }      /* our logo rests in our violet (it is drawn in its link's colour) and turns ink when you point at it. Contact is ink, as our other pages are (2026-11-25; violet before: before-black-contact-pages.css) */
+/* The menu's hover (2026-11-25, after the user's reference, sensitive.work). A page's name rolls up: the word slides out at the top as its copy slides in from below,
+   in half a second, easing out, and it turns our violet as it goes; Contact too, since it rests in ink like the rest (2026-11-25). Our logo rests in our violet and turns the words' own colour when you point at it (ink on paper, paper over a client's site), then back.
+   (Underlined on pointing, a turning logo, and a violet logo and Contact at rest, before: before-nav-hover.html.) The script adds the copy, and the logo is drawn in the
+   words' colour (a mask of assets/logo.svg) so that it can change colour with them. On a touch screen there is no pointing, so none of this happens. */
+.nav .rw { display: inline-grid; overflow: hidden; padding: 4px 14px; margin: -4px -14px; line-height: 16px; }      /* clipped close to the line, as in the reference, with a little room so the soft halo round the letters is not cut hard */
+.nav .rw > span { grid-area: 1 / 1; transition: transform .5s cubic-bezier(0, 0, .2, 1); }
+.nav .rw > span + span { transform: translateY(calc(100% + 6px)); }      /* the copy waits below, out of sight */
+.nav .logo { display: block; width: calc(26px * 223.27 / 348.24); height: 26px; background-color: currentColor;
+             -webkit-mask: url(assets/logo.svg) center / contain no-repeat; mask: url(assets/logo.svg) center / contain no-repeat; }      /* 26px tall, as before */
+.nav .pages a, .nav .cta, .nav .mark { transition: color .5s cubic-bezier(0, 0, .2, 1), text-decoration-color .2s ease; }
+@media (hover: hover) {
+  .nav .pages a:hover .rw > span:first-child { transform: translateY(calc(-100% - 6px)); }
+  .nav .pages a:hover .rw > span + span { transform: none; }
+  .nav .pages a:hover { color: var(--accent); }
+  .nav .mark:hover { color: var(--ink); }      /* the logo turns ink; Contact rolls and turns violet as our other pages do */
+}
+@media (prefers-reduced-motion: reduce) { .nav .pages a:hover .rw > span:first-child { transform: none; } .nav .pages a:hover .rw > span + span { transform: translateY(calc(100% + 6px)); } }      /* no roll, only the colour */
+/* The page you are on (2026-11-25, the user: "the selected state for the nav bar should be them turning (the current animation) and becoming the violet not underlined"):
+   its name stays turned, the copy in place, as it is while you point at it, in our violet, with no underline. It turns into place a moment after the page opens, so the turn
+   is seen (pages.js adds .on). Without the script there is no copy to turn, and the violet alone says it. With less motion asked for, only the colour.
+   (Underlined before: before-selected-roll-pages.css.) */
+.nav .pages a.on, html:not(.js) .nav .pages a[aria-current="page"] { color: var(--accent); }
+.nav .pages a.on .rw > span:first-child { transform: translateY(calc(-100% - 6px)); }
+.nav .pages a.on .rw > span + span { transform: none; }
+@media (prefers-reduced-motion: reduce) { .nav .pages a.on .rw > span:first-child { transform: none; } .nav .pages a.on .rw > span + span { transform: translateY(calc(100% + 6px)); } }
+.nav :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* on a wide window the words stand down the left side, as on home: our logo at the top, our pages in the middle, Contact at the foot (before-side-nav-pages.css).
+   The page moves over to make room for them, and nothing passes under them, so the fade at the foot is not needed there. */
+@media (min-width: 901px) {
+  .nav { left: var(--edge); top: var(--top); bottom: var(--edge-b); transform: none; height: auto; max-width: none; padding: 0; gap: 0;
+         flex-direction: column; align-items: flex-start; justify-content: space-between; }
+  .nav .mark { width: auto; height: 40px; margin: 0; place-items: center start; }
+  .nav .pages { flex-direction: column; align-items: flex-start; gap: 0; }
+  .nav .pages a, .nav .cta { height: 28px; padding: 0; margin: 0; }
+  .nav::after { content: ''; flex: none; height: 28px; }      /* Contact stands under About now (2026-11-25; at the foot before: before-contact-move-pages.css): this space, as tall as it was, keeps our pages in the middle */
+  body { padding-left: 112px; padding-bottom: 0; }
+  body::before { display: none; }
+}
+@media (max-width: 640px) { .nav .mark { margin-right: 4px; } .nav .pages a { padding: 0 8px; } .nav .cta { margin-left: 4px; padding: 0 14px; } }      /* a phone: a little less room round the words, so the whole bar fits on one row */
+@media (max-width: 370px) { .nav .mark { margin-right: 0; } .nav .pages a { padding: 0 6px; } .nav .cta { margin-left: 2px; padding: 0 10px; } }
+@media (max-width: 340px) { .nav .mark { margin-right: 0; } .nav .pages a { padding: 0 4px; } .nav .cta { margin-left: 2px; padding: 0 8px; } }      /* the narrowest phones */
+
+/* ---------- buttons: square, like everything else on the page */
+/* One arrow everywhere (2026-11-25, the user: "I like the our story arrow. can we use that for all arrows"): Inter's own → at 12px, turned for the other ways
+   (up, down, up and to the right), so every arrow on the site is the same shape and the same size, whatever the words beside it. */
+.arw { display: inline-block; font: 500 12px/1 var(--face); font-style: normal; }
+.arw.up { rotate: -90deg; } .arw.down { rotate: 90deg; } .arw.ne { rotate: -45deg; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding: 0 22px; border: 0; font: 500 16px/1 var(--face); text-decoration: none; cursor: pointer; white-space: nowrap;
+       background: var(--accent); color: var(--on-accent); transition: filter .2s ease, transform .2s ease; }      /* paper words: they read on our violet at 5.6 to 1 */
+.btn:hover { filter: brightness(1.1); }
+.btn:active { transform: translateY(1px); }
+.quiet { text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 4px; transition: text-decoration-color .2s ease; }
+.quiet:hover { text-decoration-color: currentColor; }
+
+/* ---------- the spread: the sentence on the left, held on the middle line while the page goes by beside it, and the page on the right.
+   The sentence is the page's heading: as each part of the page comes past the middle line, its words turn on the wheel, the way the names do on home. */
+.spread { display: grid; grid-template-columns: var(--sent-w, 380px) minmax(0, 1fr); column-gap: clamp(40px, round(5vw, 4px), 96px); padding: 0 var(--m); }
+.spread.with-ticket { grid-template-columns: var(--sent-w, 380px) minmax(0, 1fr) 288px; }
+.say-col { position: sticky; top: 0; height: 100vh; height: 100svh; align-self: start; }
+.line { position: absolute; left: 0; top: 50%; height: 0; font: 500 var(--fs)/var(--lh) var(--face); white-space: nowrap; }
+.line > * { position: absolute; top: calc(var(--lh) * -.5); height: var(--lh); margin: 0; }
+.lead { left: 0; color: var(--grey); }
+.lead .say { position: absolute; right: 0; top: 0; height: var(--lh); transform-origin: 100% 50%; white-space: nowrap; will-change: transform, opacity; }
+.roll { left: 0; }
+.roll .name { position: absolute; left: 0; top: 0; height: var(--lh); transform-origin: 0 50%; padding: 0; margin: 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; white-space: nowrap; will-change: transform, opacity; }
+.roll .name::before { content: ''; position: absolute; inset: -4px -14px; }
+.tail { left: 0; will-change: transform; color: var(--accent); }
+.measure { position: absolute; visibility: hidden; left: -9999px; top: 0; font: 500 var(--fs)/var(--lh) var(--face); white-space: nowrap; }
+
+.story { min-width: 0; }
+/* each part is at least a screen tall and sits round the middle line, where its sentence is; a long part simply runs on past it */
+.part { min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; justify-content: center; padding: max(round(14vh, 4px), calc(var(--bar-h) + 48px)) 0 round(10vh, 4px); max-width: 680px; }
+.part + .part { border-top: 0; }
+
+/* a tablet or a phone: no room beside the page, so the sentence rides along under the bar instead, one line, turning as the parts go by */
+@media (max-width: 999px) {
+  .spread, .spread.with-ticket { display: block; }
+  .say-col { top: calc(var(--bar-h) + 8px); height: 54px; z-index: 6; overflow: hidden; margin: 0 calc(var(--m) * -1); background: color-mix(in srgb, var(--page) 88%, transparent);
+             -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: 0 1px 0 var(--line); }
+  .say-col .line { left: var(--m) !important; }
+  .story { padding-top: 8px; }
+  .part { min-height: 0; display: block; padding: 40px 0 56px; max-width: 640px; }
+  .part:first-child { padding-top: 28px; }
+}
+
+/* ---------- what arrives as it comes into view: the parts of each section rise a little and come up to strength, one after another.
+   Only with the script running (html.js), so nothing stays hidden if it does not; and not at all for anyone who has asked for less motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .js .rise { opacity: 0; transform: translateY(22px); transition: opacity .7s cubic-bezier(.2, .7, .2, 1), transform .7s cubic-bezier(.2, .7, .2, 1); transition-delay: calc(var(--i, 0) * 70ms); }
+  .js .rise.in { opacity: 1; transform: none; }
+}
+
+/* ---------- a price board, set like the price list in a shop: the name, a row of our print dots, the price */
+.board { display: grid; gap: 0; }
+.group { color: var(--grey); padding: 0 0 10px; }
+.group + .row, .row + .row, .has + .row { margin-top: 0; }
+.row { display: flex; align-items: baseline; gap: 0; width: 100%; padding: 14px 0 6px; margin: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: default; }
+button.row { cursor: pointer; }
+.row .what { flex: none; }
+.row .tag { flex: none; margin-left: 10px; color: var(--grey); }
+.row .dots { flex: 1; min-width: 24px; height: 1em; margin: 0 12px; align-self: baseline; transform: translateY(.18em);
+             background: radial-gradient(circle, currentColor 0 1px, transparent 1.35px) 0 100% / 6px 6px repeat-x; opacity: .4; transition: opacity .2s ease, color .2s ease; }
+.row .cost { flex: none; font-variant-numeric: lining-nums tabular-nums; }      /* figures on the line, all one width where the face has them (General Sans has no tabular figures, so here its prices stay proportional) */
+.row .what::after { content: '.'; color: var(--accent); opacity: 0; transition: opacity .2s ease; }
+button.row:hover .dots { opacity: .7; }
+button.row[aria-pressed="true"] .what::after { opacity: 1; }      /* chosen: it ends in our full stop, like the name on the line */
+button.row[aria-pressed="true"] .dots { color: var(--accent); opacity: 1; }
+.has { list-style: none; padding: 0 0 8px; color: var(--grey); }
+.has li { position: relative; padding: 2px 0 2px 18px; }
+.has li::before { content: ''; position: absolute; left: 2px; top: calc(2px + .62em); width: 4px; height: 4px; border-radius: 50%; background: currentColor; opacity: .7; }      /* one print dot for each thing included */
+.block + .block { margin-top: 44px; }
+.note { color: var(--grey); margin-top: 14px; max-width: 34em; }
+.terms { margin-top: 44px; padding-top: 16px; box-shadow: 0 -1px 0 var(--line); color: var(--grey); max-width: 36em; }

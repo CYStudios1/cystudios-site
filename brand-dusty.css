@@ -1,0 +1,27 @@
+/* PROTOTYPE ONLY (2026-11-24): Dusty violet, being tried across the site. It applies only while brand.js has set <html data-brand="dusty">
+   (?brand=dusty; ?brand=current goes back to "As it is", which this file never touches). Every page links this file; without the switch it changes nothing.
+
+   From the palette explorer, after the colour research: our violet, faded. Lower saturation reads as more nostalgic, and the cooler tones of people
+   (slate blue, dusty violet, soft green) as calm and trust. The olive ink becomes a violet-black, so the words and the accent are one family.
+
+   Ground #F3F2EF        the page, under the hanji fibres
+   Ink #1B1A22           every word: 15.4 to 1 on the ground
+   Accent #5E5290        ours alone: Contact, the badge, the full stop, links. Paper words on it read 6.1 to 1 (ink would not)
+   Slate blue #7088A6    a supporting colour, never a button or a link. On the site: pictures still to come (the empty frame at the end of the wall,
+                         the team plates on About), printed in our dots. Ink words on it 4.7 to 1; paper words would not read (3.3)
+   Soft green #9DB39A    a supporting colour for our posts and client reports, not used on the site yet. Ink words on it 7.7 to 1; never paper (2.0)
+   Where the supporting colours could go, with examples to test: dusty-violet.html */
+
+html[data-brand="dusty"] {
+  --page: #F3F2EF; --ink: #1B1A22; --accent: #5E5290; --on-accent: var(--page);
+  --accent-light: #BDB6EA;      /* the accent lightened, for the full stop over a dark site and focus rings on the bar: 9 to 1 on ink */
+  --wash: #E4E2F7;              /* selected text */
+  --line: rgba(27, 26, 34, .2);
+  --slate: #7088A6; --green: #9DB39A;
+  --plate-ink: var(--slate);    /* pictures still to come are printed in slate blue */
+  --bar-violet: var(--accent);  /* the badge and Contact: flat dusty violet (the explorer's Gradient button shows the other way) */
+}
+html[data-brand="dusty"] body { --bar-violet: var(--accent); --accent-light: #BDB6EA; }      /* home sets these on the body, so they are set there too */
+
+/* the empty frame at the end of the wall ("Your story / Next on the wall"): a picture still to come, so slate blue dots */
+html[data-brand="dusty"] .art .canvas { background: color-mix(in srgb, var(--page) 50%, #fff) radial-gradient(circle, color-mix(in srgb, var(--slate) 42%, transparent) 0 1.1px, transparent 1.5px) 0 0 / 7px 7px; }

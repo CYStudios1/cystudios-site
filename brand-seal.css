@@ -1,0 +1,28 @@
+/* PROTOTYPE ONLY (2026-11-24): the "seal on hanji" brand, being tried before it is final. It applies only while brand.js has set <html data-brand="seal">
+   (?brand=seal; ?brand=current turns it off). Every page links this file; without the switch it changes nothing.
+
+   The idea: in Korea you put your seal (도장) on what you have made. Our five petals are the studio's seal, cut out of a round red seal and pressed on hanji,
+   the paper we tell stories on. So the red marks where we sign: the seal in the bar, Contact, the full stop after our own sentence. Never a client's work.
+
+   Colour: paper, ink and one seal red, a deeper cinnabar than the kit's persimmon. Paper words on it read 4.7 to 1; ink would not (3.4). Violet steps back.
+   Type: the sentence is set in Hahmlet, a Korean-designed serif, so "We are CYStudios." reads as the first line of a story. Everything else stays in Inter, at the same even sizes. */
+
+html[data-brand="seal"] {
+  --accent: #C8372D;            /* seal red (인주, the red paste a seal is pressed in) */
+  --accent-light: #F2998D;      /* the red lightened, for the full stop over a dark site and focus rings on the ink bar: 8 to 1 on ink */
+  --on-accent: var(--page);
+  --wash: #F6E1DC;              /* selected text */
+  --bar-violet: var(--accent);  /* the bar's badge and Contact: one flat red, no gradient (a seal's red is one colour) */
+  --display: "Hahmlet", Georgia, "Times New Roman", serif;
+}
+html[data-brand="seal"] body { --bar-violet: var(--accent); --accent-light: #F2998D; --who: var(--accent); }      /* home sets these on the body, so they are set there too */
+
+/* the seal in the bar: the round impression itself, not a coloured circle with the petals on it */
+html[data-brand="seal"] .nav .mark { background: url(assets/seal.svg) center / 100% 100% no-repeat; }
+html[data-brand="seal"] .nav .mark .logo { visibility: hidden; }
+
+/* the sentence, on home and on the other pages: the line, the words measured for it, and the wall's opening line */
+html[data-brand="seal"] .line, html[data-brand="seal"] .measure, html[data-brand="seal"] .wall .intro .lede { font-family: var(--display); }
+
+/* the empty frame at the end of the wall, printed in our dots: they take our colour, as everything of ours does */
+html[data-brand="seal"] .art .canvas { background: #FAF9F5 radial-gradient(circle, rgba(200, 55, 45, .2) 0 1.1px, transparent 1.5px) 0 0 / 7px 7px; }

@@ -1,0 +1,1660 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CYStudios: name roll prototype</title>
+<link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+<script src="brand.js"></script>      <!-- PROTOTYPE ONLY: ?brand=dusty tries Dusty violet (brand-dusty.css), ?brand=seal the declined seal (brand-seal.css), ?brand=current goes back -->
+<link rel="stylesheet" href="brand-seal.css">
+<link rel="stylesheet" href="brand-dusty.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400..500;1,14..32,400..500&display=swap" rel="stylesheet">      <!-- with its italic, for the signposts on our line -->
+<script>
+// PROTOTYPE ONLY, for the font comparison (font-compare.html): ?face=Onest shows this page in another face. Only the faces on that page are allowed. Without it, nothing changes.
+(() => {
+  const f = new URLSearchParams(location.search).get('face');
+  const google = ['Inter', 'Onest', 'Hanken Grotesk', 'Geist', 'Mona Sans', 'Golos Text', 'Instrument Sans'], fontshare = { Switzer: 'switzer' }, ours = ['General Sans', 'Author', 'Satoshi'];
+  if (!f || !(google.includes(f) || fontshare[f] || ours.includes(f))) return;
+  document.documentElement.style.setProperty('--face', `"${f}", "Helvetica Neue", Helvetica, Arial, sans-serif`);
+  if (ours.includes(f)) return;      // already in fonts.css
+  const l = document.createElement('link'); l.rel = 'stylesheet';
+  l.href = fontshare[f] ? `https://api.fontshare.com/v2/css?f[]=${fontshare[f]}@400,500&display=swap` : `https://fonts.googleapis.com/css2?family=${f.replace(/ /g, '+')}:wght@400;500&display=swap`;
+  window.faceReady = new Promise((ok) => { l.onload = l.onerror = ok; }); document.head.append(l);
+})();
+</script>
+<style>
+  :root {
+    --page: #F5F4F0; --ink: #171C0C; --accent: #5F48DA; --on-accent: var(--page); --line: rgba(23, 28, 12, .2);
+    --paper: url(assets/hanji.png) 0 0 / 600px 600px, url(assets/hanji-cloud.png) 0 0 / 840px 840px;      /* the paper is hanji (since 2026-11-24): mulberry fibres over a soft cloud, laid over --page. ?paper=grain shows the dust flecks it had before */
+    --shade: #0C0D0A;      /* a neutral black, only for darkening over clients' sites and pictures (the veil, the shade on a curling picture): our ink is a little olive and would tint their colours */
+    --grey: color-mix(in srgb, var(--ink) 62%, var(--page)); --wash: #ECE9FB;      /* the kit's grey (#6B6E63) for secondary words, and the violet wash for selected text */      /* our violet (periwinkle before it: before-violet.html); words on it are paper, 5.6 to 1 */
+    /* Small type in one face, Inter Medium (free, from Google Fonts; its optical sizes keep it a text face at these small sizes), line spacing 1.1.
+       Kept before it: General Sans in before-inter.html, Author in before-general.html, Satoshi in before-author.html, Instrument Sans in before-satoshi.html, Atkinson Hyperlegible Next in before-instrument.html, Schibsted Grotesk in before-atkinson.html, Inter Tight in before-schibsted.html.
+       Every type size is an even number of pixels, each the Inter Tight size rounded down:
+       18 for the sentence on a wide window and on a phone, 16 on a tablet, 14 for the bar, the buttons and the caption, 12 for the hint and the smallest labels.
+       --pitch is how far apart the names sit on the front of the wheel. */
+    --face: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --fs: 16px; --lh: calc(var(--fs) + 2px);
+    --edge: 28px; --edge-b: 28px; --top: 24px;       /* how far the bar and the buttons sit from the edges of the window */
+    --txt: var(--page);                               /* the sentence is paper over a client's site, and ink on the bare page */
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; overflow: hidden; overscroll-behavior: none; background: var(--ink); }      /* one black: our ink (it was a darker near-black, #12130F) */
+  @media (min-width: 1000px) { :root { --fs: 18px; } }      /* a wide window: the sentence one step larger, so it holds the middle of a big screen */
+  /* a phone: slightly larger words (it is the whole page), and everything a thumb's width from the edge and clear of the notch and the home bar */
+  @media (max-width: 640px) { :root { --fs: 18px; --edge: 16px; --edge-b: max(16px, env(safe-area-inset-bottom)); --top: max(14px, env(safe-area-inset-top)); } }
+  body { font: 500 14px/20px var(--face); font-variant-numeric: lining-nums; color: var(--ink); }      /* figures that sit on the line (Inter's own; Author, some faces ago, needed asking for them) */
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+  ::selection { background: var(--wash); }
+  .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+  /* ---------- the nav: one ink pill at the top (our mark | Work, Services, About | Contact) and one round-ended button at the bottom right.
+     The bar is solid ink with paper words, the same object on every page and over every client's site: our frame round their story.
+     Our mark sits in a round violet badge at the left end, the logo in paper on it. Contact is ours, an inset pill at the right end in the same violet.
+     The badge and Contact share one gradient, from the user's design in Figma: #4C49CB at the top to #7168A1 at the bottom. Paper words read on all of it (6.1 to 1 at the top, 4.6 at the bottom).
+     The button at the bottom right is about the client on the line, so it takes their colour, read from their own site. On our own line there is no button: Contact is already in the bar.
+     (Before this: the paper badge, violet logo and solid violet Contact, and a "Contact →" button at the bottom right on our line, in before-gradient-bar.html.
+     The square glass bar before that is kept in before-ink-pill.html; the colour schemes tried before that in six-colours.html.) */
+  body {
+    --bar-violet: linear-gradient(180deg, #4C49CB, #7168A1);      /* the badge and Contact */
+    --accent-light: #A79AEB;        /* the accent lightened, for a mark on a dark site or on the ink bar */
+    --who: var(--accent); --who-ink: var(--on-accent);      /* the colour of whoever is on the line, and the words on it (paper reads on our violet at 5.6 to 1; ink would not). Set by the script. */
+  }
+  /* The top of the page: no bar (2026-11-24, "no nav bar, just logo and text"; the ink bar it replaced is in before-no-bar.html). Our logo and our pages sit on the page itself,
+     centred where the bar was, at the bar's sizes. On paper the words are ink and the logo and Contact our violet; over a client's site they turn paper and the violet lightens,
+     with a soft shadow, so they read on any site. The page you are on stays turned, in our violet (see below). */
+  .nav { position: fixed; left: 50%; top: var(--top); transform: translateX(-50%); z-index: 6; display: flex; align-items: center; gap: 2px; height: 40px; padding: 4px;
+         color: var(--ink); font: 500 12px/1 var(--face); white-space: nowrap; view-transition-name: bar; transition: color .6s ease; }
+  body:not(.on-paper) .nav { color: var(--page); text-shadow: 0 1px 10px rgba(12, 13, 10, .5); }
+  .nav .mark { flex: none; display: grid; place-items: center; width: 32px; height: 32px; margin-right: 6px; text-decoration: none; }
+  .nav .mark .logo { transition: filter .6s ease; }
+  body:not(.on-paper) .nav .logo { filter: drop-shadow(0 1px 6px rgba(12, 13, 10, .5)); }      /* over a client's site the logo is paper, as the words are, with their soft shadow */
+  .logo { display: block; width: auto; height: 26px; }      /* our logo, five petal-shaped print dots, in our violet (assets/logo.svg). 26px tall since 2026-11-24 ("a little bit bigger"; 22px before: before-logo-size.html) */
+  .nav .pages { display: flex; align-items: center; gap: 2px; }
+  .nav .pages a, .nav .cta { display: flex; align-items: center; height: 32px; padding: 0 12px; text-decoration: none; }
+  /* The menu's hover (2026-11-25, after the user's reference, sensitive.work). A page's name rolls up: the word slides out at the top as its copy slides in from below,
+     in half a second, easing out, and it turns our violet as it goes; Contact too, since it rests in ink like the rest (2026-11-25). Our logo rests in our violet and turns the words' own colour when you point at it (ink on paper, paper over a client's site), then back.
+     (Underlined on pointing, a turning logo, and a violet logo and Contact at rest, before: before-nav-hover.html.) The script adds the copy, and the logo is drawn in the
+     words' colour (a mask of assets/logo.svg) so that it can change colour with them. On a touch screen there is no pointing, so none of this happens. */
+  .nav .rw { display: inline-grid; overflow: hidden; padding: 4px 14px; margin: -4px -14px; line-height: 16px; }      /* clipped close to the line, as in the reference, with a little room so the soft halo round the letters is not cut hard */
+  .nav .rw > span { grid-area: 1 / 1; transition: transform .5s cubic-bezier(0, 0, .2, 1); }
+  .nav .rw > span + span { transform: translateY(calc(100% + 6px)); }      /* the copy waits below, out of sight */
+  .nav .logo { display: block; width: calc(26px * 223.27 / 348.24); height: 26px; background-color: currentColor;
+               -webkit-mask: url(assets/logo.svg) center / contain no-repeat; mask: url(assets/logo.svg) center / contain no-repeat; }      /* 26px tall, as before */
+  .nav .pages a, .nav .cta, .nav .mark { transition: color .5s cubic-bezier(0, 0, .2, 1), text-decoration-color .2s ease; }
+  @media (hover: hover) {
+    .nav .pages a:hover .rw > span:first-child { transform: translateY(calc(-100% - 6px)); }
+    .nav .pages a:hover .rw > span + span { transform: none; }
+    .nav .pages a:hover { color: var(--accent); }
+    .nav .mark:hover { color: var(--ink); }      /* the logo turns ink; Contact rolls and turns violet as our other pages do */
+  }
+  @media (prefers-reduced-motion: reduce) { .nav .pages a:hover .rw > span:first-child { transform: none; } .nav .pages a:hover .rw > span + span { transform: translateY(calc(100% + 6px)); } }      /* no roll, only the colour */
+  @media (hover: hover) { body:not(.on-paper) .nav .pages a:hover { color: var(--accent-light); } body:not(.on-paper) .nav .mark:hover { color: var(--page); } }      /* over a client's site: the violet lightened so it reads, and paper */
+  .nav .cta { margin-left: 6px; }
+  .nav .mark { color: var(--accent); }      /* our logo rests in our violet (it is drawn in its link's colour). Contact is ink, as our other pages are (2026-11-25, the user; violet before: before-black-contact.html) */
+  body:not(.on-paper) .nav .mark { color: var(--accent-light); }      /* over a client's site, lightened so it reads */
+  /* The page you are on (2026-11-25, the user: "the selected state for the nav bar should be them turning (the current animation) and becoming the violet not underlined"):
+     its name stays turned, the copy in place, as it is while you point at it, in our violet (lightened over a client's site), with no underline. On home, Work is on while
+     the wall is in view (.here) and while All Work is open (pressing it again closes it); it turns as it comes on, and back as it goes. With less motion asked for, only the colour.
+     (Underlined before: before-selected-roll.html.) */
+  .nav .pages a.here, .nav .pages a[aria-expanded="true"] { color: var(--accent); }
+  body:not(.on-paper) .nav .pages a.here, body:not(.on-paper) .nav .pages a[aria-expanded="true"] { color: var(--accent-light); }
+  .nav .pages a.here .rw > span:first-child, .nav .pages a[aria-expanded="true"] .rw > span:first-child { transform: translateY(calc(-100% - 6px)); }
+  .nav .pages a.here .rw > span + span, .nav .pages a[aria-expanded="true"] .rw > span + span { transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .nav .pages a.here .rw > span:first-child, .nav .pages a[aria-expanded="true"] .rw > span:first-child { transform: none; }
+    .nav .pages a.here .rw > span + span, .nav .pages a[aria-expanded="true"] .rw > span + span { transform: translateY(calc(100% + 6px)); }
+  }
+  .go:hover { filter: brightness(1.1); }
+  .nav :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  body:not(.on-paper) .nav :focus-visible { outline-color: var(--accent-light); }
+  @view-transition { navigation: auto; }      /* going to another page, the bar stays where it is and the rest fades across */
+  ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .35s; }
+  /* a phone: the whole bar still fits on one row, a thumb's width from each edge */
+  @media (max-width: 640px) { .nav { max-width: calc(100% - var(--edge) * 2); } .nav .mark { margin-right: 4px; } .nav .pages a { padding: 0 8px; } .nav .cta { margin-left: 4px; padding: 0 14px; } }
+  @media (max-width: 370px) { .nav .mark { margin-right: 0; } .nav .pages a { padding: 0 6px; } .nav .cta { margin-left: 2px; padding: 0 10px; } }
+  @media (max-width: 340px) { .nav .mark { margin-right: 0; } .nav .pages a { padding: 0 4px; } .nav .cta { margin-left: 2px; padding: 0 8px; } }      /* the narrowest phones */
+
+  /* ---------- the page: the client whose name is on the line fills the whole window behind the sentence */
+  /* The client's site is a card on our paper while you choose (2026-11-24, the user's idea; full window all the time before: before-card.html).
+     Turning through the names, the site sits inset on the hanji with softly rounded corners, dimmed, with our sentence over it: we are showing you their work.
+     Stop on a name for a moment and our words fade, the dim lifts, and the card grows to the edges of the window: now it is theirs. The next scroll, drag or key brings the card back.
+     The rounded corners are the one round shape on the page: they make the card read as a screen, which is what a website is, and they go square once it is the window.
+     The script sets the card's size (see the card, below the frame loop); the paper round it is the hero's own background. */
+  .hero { position: fixed; inset: 0; overflow: hidden; touch-action: none; cursor: ns-resize; background: var(--paper) var(--page); }
+  #media { position: absolute; inset: 0; isolation: isolate; }      /* the layers are piled in an order of their own in here, always under the veil and the sentence */
+  /* the script sets each layer's strength (see showBehind): the site arriving fades in over the one already there, which stays whole underneath until it is covered */
+  .layer { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; opacity: 0; transform-origin: 0 0; }      /* in the card a site is shown a little smaller, whole across */
+  .layer.paper { background: var(--paper) var(--page); }      /* our own line: the bare hanji (with ?sheet=1, the proof sheet printed on it) */
+  /* the proof sheet (2026-11-25, the user picked it from three written directions; bare paper before: before-proof-sheet.html). Moved to the wall the same day ("place all this there"):
+     our line is bare paper again and ?sheet=1 brings the sheet back (before-wall-print.html is the page with it). The script prints it: see "the print" below.
+     It multiplies with the hanji under it, as ink does, so the paper's fibres show through the dots. */
+  .sheet { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; pointer-events: none; mix-blend-mode: multiply; }
+  /* over the print, our words on paper keep a little paper round each letter, so they read over the darkest frame (as the words down the side do over the wall's pictures) */
+  .sheet-on .hero.on-paper .line { text-shadow: 0 0 2px var(--page), 0 0 6px var(--page), 0 0 12px var(--page); }
+  body.sheet-on.on-paper .meta { text-shadow: 0 0 2px var(--page), 0 0 6px var(--page), 0 0 12px var(--page); }
+  /* a veil over the site so the pale sentence always reads, a little darker along the line of the sentence. --dim lifts it when the site fills the window */
+  /* A trial (2026-11-25, the user: "can we try applying a more subtle inner shadow of our indigo into our landing"; none before: before-glow-ticker.html): the window's edges
+     glow softly from inside in our violet, more gently than a Services column you point at. Only on our own paper: never over a client's site, whose colours stay their own,
+     and not during the opening roll. */
+  .glow { position: fixed; inset: 0; z-index: 7; pointer-events: none; opacity: 0; transition: opacity .6s ease;
+          box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent), inset 0 0 96px -32px color-mix(in srgb, var(--accent) 26%, transparent); }
+  body.on-paper:not(.opening) .glow { opacity: 1; }
+  .veil { position: absolute; inset: 0; pointer-events: none; opacity: 1; transition: opacity .6s ease; --dim: 1;
+          background: linear-gradient(to bottom, rgba(12, 13, 10, calc(.52 * var(--dim))), rgba(12, 13, 10, calc(.7 * var(--dim))) 50%, rgba(12, 13, 10, calc(.52 * var(--dim)))); }
+  .on-paper .veil { opacity: 0; }
+  /* An upright window shows the client's phone page, whose words are the same size as ours and run right behind the wheel. So there the veil is darker across the band the wheel turns in,
+     and the site stays clear above and below it. */
+  @media (max-aspect-ratio: 85/100) {
+    .veil { background: linear-gradient(to bottom, rgba(12, 13, 10, calc(.58 * var(--dim))), rgba(12, 13, 10, calc(.6 * var(--dim))) 18%, rgba(12, 13, 10, calc(.85 * var(--dim))) 34%, rgba(12, 13, 10, calc(.85 * var(--dim))) 66%, rgba(12, 13, 10, calc(.6 * var(--dim))) 82%, rgba(12, 13, 10, calc(.66 * var(--dim)))); }
+  }
+  .on-paper { --txt: var(--ink); }
+
+  /* the sentence: the first words turn on a small wheel of their own ("We are" for us, "This is" for a client), the names turn on theirs, and the full stop follows the name on the line */
+  .fade { position: absolute; inset: 0; }      /* the sentence's window-sized box, for its fade as the page slides (see fadeByPlace) */
+  .line { position: absolute; left: 0; top: 50%; height: 0; font: 500 var(--fs)/var(--lh) var(--face); color: var(--txt); transition: color .6s ease; white-space: nowrap; }
+  .line > * { position: absolute; top: calc(var(--lh) * -.5); height: var(--lh); margin: 0; }
+  .lead { left: 0; opacity: .62; }      /* the first words ("We are", "This is") step back to grey, so the name is the brightest thing in the sentence. 0.62 keeps them readable over the lightest sites */
+  .say { position: absolute; right: 0; top: 0; height: var(--lh); transform-origin: 100% 50%; white-space: nowrap; will-change: transform, opacity; }
+  .tail { left: 0; will-change: transform; }
+  .tail b { font-weight: 500; color: var(--accent); }
+  .hero:not(.on-paper) .tail b { color: var(--accent-light); }       /* lightened so it shows on a dark site */
+  /* the wheel: the names sit round a drum that turns towards you. The name on the line is its front; four show above and four below, tipping away and fading. */
+  .roll { left: 0; }
+  .name { position: absolute; left: 0; top: 0; height: var(--lh); transform-origin: 0 50%; padding: 0; margin: 0; border: 0; background: none; font: inherit; letter-spacing: inherit; color: inherit; cursor: pointer; white-space: nowrap; will-change: transform, opacity; }
+  .name:focus-visible { outline-offset: 6px; }
+  .name::before { content: ''; position: absolute; inset: calc(var(--hit, 4px) * -1) -14px; }      /* the whole row counts as the name, so a finger does not have to land on the letters */
+  .measure { position: absolute; visibility: hidden; left: -9999px; top: 0; font: 500 var(--fs)/var(--lh) var(--face); white-space: nowrap; }
+
+  /* along the bottom, on one centre line. Left: the button for seeing all the work at once, then what this business is. Middle: how to use the page. Right: the one button for this client.
+     The left button is about everyone, so it is glass like the bar. The right one is about the client on the line, so it wears their colour. */
+  .foot { position: fixed; z-index: 6; left: var(--edge); bottom: var(--edge-b); display: flex; align-items: center; gap: 18px; pointer-events: none; }
+  .see { pointer-events: auto; display: inline-flex; align-items: center; gap: 10px; height: 48px; padding: 0 18px 0 16px; border: 0; cursor: pointer; font: 500 14px/1 var(--face); white-space: nowrap;
+         background: var(--bar); color: var(--bar-ink); -webkit-backdrop-filter: var(--bar-blur); backdrop-filter: var(--bar-blur);
+         box-shadow: 0 0 0 1px color-mix(in srgb, var(--bar-ink) 20%, transparent), 0 16px 34px -18px rgba(0, 0, 0, .5); transition: background-color .45s ease, color .45s ease, box-shadow .45s ease; }
+  .see svg { flex: none; display: block; }
+  .see .x, .see[aria-expanded="true"] .g { display: none; }
+  .see[aria-expanded="true"] .x { display: block; }
+  .see:hover { box-shadow: 0 0 0 1px color-mix(in srgb, var(--bar-ink) 55%, transparent), 0 16px 34px -18px rgba(0, 0, 0, .5); }
+  .meta { margin: 0; text-wrap: balance; font: 500 14px/20px var(--face); color: color-mix(in srgb, var(--page) 74%, transparent); transition: color .6s ease, opacity .3s ease; }
+  .on-paper .meta { color: var(--grey); }      /* the line at the foot is a step back from the sentence: our grey on paper (4.7 to 1), a quieter paper over a client's site (ink before: before-grey-line.html) */
+  .all-open .meta, .all-open .trust { opacity: 0; }
+  /* On our own line the foot says who trusts us (2026-11-25, the user's words: "Digital Studio Trusted By:", then only "Trusted By:" the same day, as what we do now
+     stands under the strip; then a ticker of logos; "Digital studio: websites, social media,
+     influencer outreach" before: before-trusted-by.html). The logos are the five from our old site's ticker, in their own colours (assets/old-logos/colour), each given the same area, so no
+     business is bigger than another. They run slowly to the right, round and round, and fade out at both ends of their window. On a client's line the foot still says what
+     that business does. With less motion asked for, the logos stand still. "Trusted By:" is 12px, the size of the menu and the signposts (2026-11-25, the user: "the nav bar,
+     our story, clients story, and trusted by should all be the same font size"; 14px before: before-one-row.html). */
+  .trust { display: none; align-items: center; gap: 14px; margin: 0; min-width: 0; max-width: 100%; font: 500 12px/1.5 var(--face); color: var(--grey); white-space: nowrap; transition: opacity .3s ease; }
+  .foot.ours .trust { display: flex; }
+  .trust .ticker { flex: 0 1 280px; min-width: 0; overflow: hidden; -webkit-mask: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent); mask: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent); }
+  .trust .belt { display: flex; align-items: center; width: max-content; height: 26px; animation: belt var(--belt-dur, 12s) linear infinite; }
+  .trust .belt img { display: block; flex: none; margin-right: 28px; }
+  @keyframes belt { from { transform: translateX(-33.3333%); } to { transform: none; } }      /* three copies of the logos: one copy's width each time round, to the right (2026-11-25, the user: "the logo ticker should be moving to the right"; to the left before: before-glow-ticker.html) */
+  @media (prefers-reduced-motion: reduce) { .trust .belt { animation: none; } }
+  /* The opening (2026-11-25, the user's request): on arrival the wheel rolls down through every client to our own line, and each client's site comes up behind as their name
+     crosses the line, at the full size of the window: no card, no rounded corners, and none of our words round the edge. Once it has settled on "We are CYStudios." and our paper
+     is whole, the words down the side come in, and the line at the foot (the script does this: see arrive). Anything the visitor does stops the roll, and they come in at once.
+     (The roll kept our paper behind it, with our words in place, before: before-intro-previews.html.) */
+  .opening .nav, .opening .go { opacity: 0; visibility: hidden; pointer-events: none; }
+  .opening .meta, .opening .trust { opacity: 0; transition: none; }      /* hidden from the first frame, not faded out (what we do shows on our line's foot now, so it would flash) */
+  .go { position: fixed; z-index: 6; right: var(--edge); bottom: var(--edge-b); display: inline-flex; align-items: center; height: 48px; padding: 0 22px; font: 500 14px/1 var(--face); text-decoration: none; white-space: nowrap;      /* its corners follow the card's (the script sets them): square once the site fills the window */
+        
+        background: var(--who); color: var(--who-ink);
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--who-ink) 20%, transparent), 0 16px 34px -18px rgba(0, 0, 0, .5);
+        transition: background-color .45s ease, color .45s ease, box-shadow .45s ease, filter .2s ease, opacity .3s ease, transform .3s ease, visibility 0s; }
+  /* on our own line, and on All Work, there is no button: Contact is already in the bar. It sinks away in the last client's colour, and comes back with the next client's */
+  .go.off { opacity: 0; transform: translateY(8px); visibility: hidden; pointer-events: none;
+            transition: background-color .45s ease, color .45s ease, box-shadow .45s ease, filter .2s ease, opacity .3s ease, transform .3s ease, visibility 0s linear .3s; }
+  .go .short { display: none; }
+  .how { position: absolute; left: 50%; bottom: 44px; transform: translateX(-50%); margin: 0; font: 400 12px/16px var(--face); color: var(--txt); opacity: .62; white-space: nowrap; transition: color .6s ease, opacity .6s ease; }
+  .how.seen { opacity: 0; }
+  @media (max-width: 1000px) {
+    /* a tablet or a narrow window: no room for all of it on one line, so the caption sits above the left button and the hint sits under the wheel */
+    .foot { flex-direction: column-reverse; align-items: flex-start; gap: 14px; }
+    .how { bottom: auto; top: calc(50% + max(var(--reach, 130px), var(--crown-end, 0px)) + 20px); }      /* and below the crown, which the script measures */
+  }
+  .foot { min-height: 48px; justify-content: center; }      /* the caption sits on the same centre line as the button at the bottom right */
+  @media (max-width: 900px) { .go .long { display: none; } .go .short { display: inline; } }      /* our words run along the foot here, and the client's full name on the button would run into them (more so inside the card); the name is on the line already */
+  @media (max-width: 640px) { .go .long { display: none; } .go .short { display: inline; } .meta { font-size: 14px; } .foot { right: var(--edge); bottom: calc(var(--edge-b) + 48px + 10px); min-height: 0; } }      /* a phone: the caption goes just above the button, so neither covers the other */      /* the name is already on the line, so the button can be short */
+  @media (max-height: 520px) { .how { display: none; } .meta, .foot.ours .trust { display: none; } }
+  /* The words at the foot, the line at the top (2026-11-24, the user's "what if"; the words at the top and the line at the bottom left are in before-bottom-nav.html).
+     Our logo and pages sit centred at the bottom of the window, level with the client's button at the bottom right. The line that says what this is
+     ("Digital studio: …", or what the business on the line does) sits centred at the top. The hint and, on a phone, the client's button move up, clear of the words. */
+  .nav { top: auto; bottom: calc(var(--edge-b) + 4px); }      /* 4px up, so its middle lines up with the 48px button beside it (3px and 46px before the 2/4 grid: before-grid.html) */
+  /* The line at the foot too (2026-11-25, the user's "what if"; at the top before: before-line-bottom.html). On a wide window it is centred along the foot, on one centre line with
+     Contact at the foot of the words down the side and the client's button at the bottom right: between what reaches us and what reaches them, it says what they are.
+     It keeps 140px from each side, as the wall's words do from the side. On a tablet our words run along the foot, so the line stands just above them, centred.
+     On a phone the client's button already stands above our words, at the right, so the line sits beside it, on its centre line, from the left. */
+  .foot { left: 140px; right: 140px; top: auto; bottom: var(--edge-b); min-height: 48px; flex-direction: row; align-items: center; justify-content: center; text-align: center; }
+  @media (max-width: 900px) { .foot { left: var(--edge); right: var(--edge); bottom: calc(var(--edge-b) + 48px); min-height: 0; } }
+  @media (max-width: 640px) { .foot { right: calc(var(--edge) + 168px); bottom: calc(var(--edge-b) + 40px + 10px); min-height: 48px; justify-content: flex-start; text-align: left; }      /* clear of the button, and of it again as the card moves both in */
+                              body:has(.go.off) .foot { right: var(--edge); } }      /* on our own line there is no button, so the line may run the whole width */
+  /* Our line's foot in two places (2026-11-25, the user: "place the trusted by on the bottom left ... add A in front of digital studio and place it in center bottom";
+     "Trusted By" alone in the middle before: before-cta-centre.html). What we do stands in the middle, where a client's line says what that business does, and who trusts
+     us stands at the left. The foot runs the window's width in three columns, the outer two always the same width, so the middle one is in the very middle of the window
+     (on a client's line the left one is empty and their button stands over the right one). Where there is no room for both on one row, on a tablet or a phone, who trusts
+     us stands above what we do, at the left, and what we do stays in the middle. */
+  .foot { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); column-gap: 24px; left: var(--edge); right: var(--edge); }
+  .foot .meta { grid-area: 1 / 2; }
+  .foot .trust { grid-area: 1 / 1; justify-self: start; }
+  @media (max-width: 900px) { .foot { grid-template-columns: minmax(0, 1fr); row-gap: 12px; } .foot .meta { grid-area: 2 / 1; } .foot .trust { grid-area: 1 / 1; } .foot.ours .meta { justify-self: center; text-align: center; } }
+  @media (min-width: 1001px) { .how { bottom: calc(var(--edge-b) + 40px + 22px); } }
+  /* On a wide window the words stand down the left side, top to bottom (2026-11-24, the user's "what if"; along the foot before: before-side-nav.html).
+     Each end means something: our logo at the top; our pages in the middle, level with the sentence; Contact at the foot, level with the line and
+     the client's button at the bottom right, so what reaches us sits across from what reaches them (the logo was level with the line while it was at the top). On a phone or a tablet they stay along the foot, as there is no room at the side. */
+  @media (min-width: 901px) {
+    .nav { left: var(--edge); top: var(--top); bottom: calc(var(--edge-b) + 10px); transform: none; height: auto; max-width: none; padding: 0; gap: 0;
+           flex-direction: column; align-items: flex-start; justify-content: space-between; }
+    .nav .mark { width: auto; height: 40px; margin: 0; place-items: center start; }
+    .nav .pages { flex-direction: column; align-items: flex-start; gap: 0; }
+    .nav .pages a, .nav .cta { height: 28px; padding: 0; margin: 0; }
+    .nav::after { content: ''; flex: none; height: 28px; }      /* Contact stands under About now (2026-11-25; at the foot before: before-contact-move.html): this space, as tall as it was, keeps our pages level with the sentence */
+    body.on-paper .nav { text-shadow: 0 0 8px var(--page), 0 0 3px var(--page); }      /* on the wall, pictures pass behind the words: a little paper round each letter keeps them clear */
+    /* while a client's site is a card, the words down the side stand on our paper beside it, so they are ink and violet, as on our own line; they turn paper once the site fills the window */
+    body.carded .nav { color: var(--ink); text-shadow: 0 0 8px var(--page), 0 0 3px var(--page); }
+    body.carded .nav .logo { filter: none; }
+    body.carded .nav .mark { color: var(--accent); }      /* beside the card the words stand on our paper */
+    @media (hover: hover) { body.carded .nav .pages a:hover { color: var(--accent); } body.carded .nav .mark:hover { color: var(--ink); } }
+    body.carded .nav :focus-visible { outline-color: var(--accent); }
+  }
+  @media (max-width: 640px) { .go { bottom: calc(var(--edge-b) + 40px + 10px); } }
+  /* The crown of logos from our old site's ticker that turned under our line is gone (2026-11-24, at the user's request): before-no-crown.html. */
+
+  /* ---------- to the right of our own line: scrolling down from "We are CYStudios." moves the page sideways, to the right.
+     First what we do and who for, in a few lines; then the work, in staggered columns on a gently curved field (after a reference the user shared, 2026-11-24;
+     the paintings in two rows before it are kept in before-columns.html). Clients go in alphabetical order, one column each, so no client ranks above another.
+     The wall is our paper. Work at the top brings you here, to the first column. (The All Work view it opened before is still in the page, reached with ?all.) */
+  .wall { position: fixed; left: 0; top: 0; height: 100%; z-index: 4; visibility: hidden; will-change: transform; touch-action: none;
+          background: var(--paper) var(--page); color: var(--ink);
+          box-shadow: -4px 0 0 0 var(--page), 0 4px 0 0 var(--page); }      /* a strip of paper reaching a little over our own page, and one under its foot behind the footer, so no line shows where they meet */
+  /* the wall is our paper, exactly as on our own line: nothing darkens it, so the colour does not change as the page moves across (the user asked for this) */
+  .wall .intro { position: absolute; left: 0; top: 0; height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 14px; }
+  .wall .intro p { margin: 0; font: 500 18px/26px var(--face); text-wrap: pretty; }      /* as wide as its share of the wall (the script sets it) */
+  .wall .intro .lede { color: var(--grey); text-wrap: balance; text-align: left; }      /* even lines, each centred, so the words, the photographs above them and "Keep going" below share one middle line (2026-11-25, the user: "the centers of everything should be aligned"; left-aligned before: before-one-axis.html) */
+  .wall .intro .lede strong { font-weight: 500; color: var(--ink); }      /* grey words, with what we are and what we did in ink (2026-11-25, the user's request; all ink before: before-keep-going.html) */
+  .wall .intro .lede b { font-weight: 500; color: var(--accent); }
+  .wall .intro .body { color: var(--grey); }
+  /* "Keep going to see our work" stands at the foot of the words' frame, centred under them, with no underline (2026-11-25, the user's request; under the words before:
+     before-keep-going.html). It is a signpost like "Our Story": its arrow nudges the way to go. The script sets where across it stands. Above our words on a narrower window. */
+  .wall .intro .on { position: absolute; bottom: calc(var(--edge-b) + 16px); display: flex; justify-content: center; align-items: center; gap: 6px; padding: 0; border: 0; background: none; font: 500 12px/16px var(--face); color: var(--grey); cursor: pointer; text-decoration: none; transition: color .2s ease; }
+  .wall .intro .on { font-style: italic; }      /* italic, as the other signposts are (2026-11-25, the user's request) */
+  .wall .intro .on .arw { animation: nudge-right 1.6s cubic-bezier(.37, 0, .63, 1) infinite; }
+  /* Our parents' photographs (2026-11-25, the user's own, from the family album; cropped to the print and turned upright, in assets/family), pinned up above the words:
+     all five hang from one persimmon pin, one over another, each at its own small angle, as prints pinned to a board (the user: "all of them showing underneath with a pin on top
+     and then it would get ripped off the pin and then appear back on the bottom"). Every PILE_BEAT, while they are on screen, the top one is pulled taut against the pin,
+     tears off it and falls away, and comes back at the bottom of the stack; the pin springs a little as it lets go. Each covers the same area, so none is bigger than another.
+     The pin is drawn to look real: a persimmon ball head (the kit's #E05A44, since 2026-11-25) with its highlight, a steel needle, and its shadow on the print. (A pile, one placed on top at a time, before:
+     before-pinned-stack.html.) The script places them and turns each about the pin (see placeMemories). */
+  .memories { position: absolute; left: 0; top: 0; height: 100%; z-index: 1; pointer-events: none; }
+  .memories img { position: absolute; display: block; object-fit: cover; box-shadow: 0 0 0 1px rgba(23, 28, 12, .1); will-change: translate, rotate, opacity; }
+  .memories .pin { position: absolute; display: block; z-index: 20; }
+  .memories .pin svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  @media (prefers-reduced-motion: reduce) { .wall .intro .on .arw { animation: none; } }
+  @media (max-width: 900px) { .wall .intro .on { bottom: calc(var(--edge-b) + 64px); } }
+  .wall .intro .on:hover { color: var(--ink); }
+  /* The work. Each business's site on a computer, two to a column, every picture the same size, so none is bigger; two level rows, the same distance either side of the window's middle (staggered before: before-even-rows.html).
+     The spacing is even: the gap between columns is the gap between pictures, about a quarter of a column. The field is curved, as round the outside of a drum (as the names turn on our wheel): a column faces you in the middle of the window and turns away toward
+     the edges, where it is a little smaller, out of focus and fainter (the script sets this as the wall moves). A name shows under its picture when you point at it,
+     and always on a touch screen. */
+  .art { position: absolute; top: 0; display: block; color: var(--ink); text-decoration: none; -webkit-user-drag: none; user-select: none; transform-origin: 50% 50%; will-change: transform, filter, opacity; }
+  .art .shot { display: block; position: relative; overflow: hidden; background: #FAF9F5; box-shadow: 0 0 0 1px rgba(23, 28, 12, .08); }      /* a hairline, so a white site does not melt into the paper */
+  .art img, .art .canvas { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; -webkit-user-drag: none; }
+  /* each site is first its proof, printed in our dots on the hanji (the script prints it), and develops into the site once it is in view: the picture lies over its print */
+  .art.printed .shot { background: none; }
+  .art .print { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; }
+  .art.printed img { position: relative; }
+  .art .canvas { background: #FAF9F5 radial-gradient(circle, rgba(95, 72, 218, .2) 0 1.1px, transparent 1.5px) 0 0 / 7px 7px; }      /* the last column is still to come: bare paper in our print dots */
+  .art .cap { display: flex; flex-direction: column; justify-content: flex-start; padding-top: 10px; opacity: 0; transition: opacity .25s ease; }
+  .art .cap b { display: block; font: 500 14px/18px var(--face); }
+  .art .cap i { display: block; font: 400 12px/16px var(--face); font-style: normal; color: var(--grey); }
+  .art:hover .cap, .art:focus-visible .cap { opacity: 1; }
+  .art:hover .cap b::after, .art:focus-visible .cap b::after { content: '→'; display: inline-block; margin-left: 4px; font: 500 12px/1 var(--face); rotate: -45deg; }      /* the one arrow, up and to the right: out to their site */
+  .art.empty:hover .cap b::after, .art.empty:focus-visible .cap b::after { rotate: none; }      /* and straight on, to Contact */
+  /* One arrow everywhere (2026-11-25, the user: "I like the our story arrow. can we use that for all arrows"): Inter's own → at 12px, turned for the other ways
+     (up, down, up and to the right), so every arrow on the site is the same shape and the same size, whatever the words beside it. */
+  .arw { display: inline-block; font: 500 12px/1 var(--face); font-style: normal; }
+  .arw.up { rotate: -90deg; } .arw.down { rotate: 90deg; } .arw.ne { rotate: -45deg; }
+  .art:focus-visible { outline: none; } .art:focus-visible .shot { outline: 2px solid var(--accent); outline-offset: 4px; }
+  @media (pointer: coarse) { .art .cap { opacity: 1; } }
+
+  /* ---------- All Work: every client's site, two to a row, on one big wheel that fills the window.
+     At rest it is flat, like a page. While it turns, its two ends (the top tenth and the bottom tenth of the window) curl forward, more the faster it goes, and lie flat again
+     when it stops; a row arriving comes over that curl and lies down, and then its names appear. Each picture is cut into thin strips, each set where the wheel is at that
+     point, so pictures bend as they go round the ends. Pictures are always the wide rectangle of a site on a desktop, whatever the window's shape.
+     (Earlier versions are kept: three-across.html, round-wheel.html, camera-roll.html.) */
+  .all { position: fixed; inset: 0; z-index: 5; overflow: hidden; touch-action: none; cursor: ns-resize; background: var(--paper) var(--page);
+         opacity: 0; visibility: hidden; transition: opacity .35s ease, visibility 0s .35s; }
+  .all-open .all { opacity: 1; visibility: visible; transition: opacity .35s ease; }
+  body.all-open.on-paper { --bar: rgba(245, 244, 240, .86); }      /* pictures pass under the bar here, so its glass is less clear */
+  .drum { position: absolute; left: 0; top: 50%; width: 100%; height: 0; transform-style: preserve-3d; }
+  .strip { position: absolute; left: var(--m); width: calc(100% - var(--m) * 2); display: grid; grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); column-gap: var(--g); backface-visibility: hidden; will-change: transform; }
+  .slice { position: relative; background-color: #E9E7E1; background-repeat: no-repeat; cursor: pointer; box-shadow: inset 1px 0 var(--line), inset -1px 0 var(--line); }
+  .slice::after { content: ''; position: absolute; inset: 0; background: var(--shade); opacity: var(--sh, 0); pointer-events: none; }      /* a strip turning away at the ends takes a little shade, so the bend reads as a bend */
+  .slice.first { box-shadow: inset 1px 0 var(--line), inset -1px 0 var(--line), inset 0 1px var(--line); }
+  .slice.last { box-shadow: inset 1px 0 var(--line), inset -1px 0 var(--line), inset 0 -1px var(--line); }
+  /* pointing at a picture frames it in that client's own colour, the same colour their buttons wear */
+  .slice.hot { box-shadow: inset 3px 0 var(--c), inset -3px 0 var(--c); }
+  .slice.first.hot { box-shadow: inset 3px 0 var(--c), inset -3px 0 var(--c), inset 0 3px var(--c); }
+  .slice.last.hot { box-shadow: inset 3px 0 var(--c), inset -3px 0 var(--c), inset 0 -3px var(--c); }
+  .slice.none, .slice.away { visibility: hidden; }
+  .label { display: block; min-width: 0; transform-origin: 0 50%; will-change: transform, opacity; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font: 500 14px/22px var(--face); color: var(--ink); cursor: pointer; }
+  .label b { font-weight: 500; }
+  .label i { font: 400 12px/22px var(--face); color: var(--grey); margin-left: 10px; }
+  @media (max-width: 900px) { .label i { display: none; } }
+  @media (max-width: 640px) { .label { font-size: 12px; line-height: 18px; } }
+  /* The grid, in our own design: it is printed in dots. These are the print dots the site first opened with (prototypes/loading-screen): a 45 degree screen of round
+     dots that swell where the tone is darker, so that close together they make a picture. Here the picture they make is the grid: a soft line down each margin and down
+     the gap between the columns, and a level line where each of the wheel's two ends begins. The grid does not move: it is printed on the page, and the pictures
+     pass over it. It is drawn once on a canvas under the pictures (see the script), and kept faint. */
+  .dotgrid { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+  /* the picture that travels between the full window and its place on the wheel when All Work opens or closes */
+  .fly { position: fixed; z-index: 5; overflow: hidden; pointer-events: none; background: var(--ink); }
+  .fly > * { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+  .fly i { background: linear-gradient(to bottom, rgba(12, 13, 10, .52), rgba(12, 13, 10, .7) 50%, rgba(12, 13, 10, .52)); }
+  @media (max-aspect-ratio: 85/100) { .fly i { background: linear-gradient(to bottom, rgba(12, 13, 10, .58), rgba(12, 13, 10, .6) 18%, rgba(12, 13, 10, .85) 34%, rgba(12, 13, 10, .85) 66%, rgba(12, 13, 10, .6) 82%, rgba(12, 13, 10, .66)); } }      /* the same darker band as the veil on an upright window */
+  /* Two quiet signposts on our own line (2026-11-25, the user's request). At the top, in the middle: up to the clients' stories, which are the names on the wheel above us.
+     At the right, level with the sentence: on to our own story, which the wall tells to the right. They are words, not links: no underline, nothing to press.
+     Only their arrows move, nudging the way to go. They show only while our own line is on the wheel, and fade as you leave it (the script sets their strength). */
+  .cues { position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: 0; }
+  .cue { position: absolute; margin: 0; display: flex; align-items: center; gap: 6px; font: 500 12px/16px var(--face); color: var(--grey); white-space: nowrap; }
+  .cue.up { left: 50%; top: calc(var(--top) + 4px); transform: translateX(-50%); flex-direction: column; gap: 4px; }      /* the pair is centred on the logo's line at the top left */
+  .cue.right { right: var(--edge); top: 50%; transform: translateY(-50%); }
+  .cue .say-cue { font-style: italic; }      /* italic (2026-11-25, the user's request): a signpost, said in passing, not a link */
+  .cue .arrow { display: block; animation: nudge-up 1.6s cubic-bezier(.37, 0, .63, 1) infinite; }
+  .cue.right .arrow { animation-name: nudge-right; }
+  @keyframes nudge-up { 50% { translate: 0 -3px; } }
+  @keyframes nudge-right { 50% { translate: 3px 0; } }
+  @media (prefers-reduced-motion: reduce) { .cue .arrow { animation: none; } }
+  @media (max-width: 640px) { .cue.right { top: calc(var(--say-end, var(--strip-end, 50%)) + 14px); transform: none; }
+                              .cue.right.beside { top: 50%; transform: translateY(-50%); } }      /* a short phone: no room for it above our button (2026-11-25), so it stands level with the sentence, as on a wide window */      /* a phone: the sentence, the strip and what we do fill the middle, so it sits just under them, still at the right */
+  /* A strip of the work under our line (2026-11-25, the user's request, after two references they shared: a row of pictures under a title). All nine sites in one row,
+     in alphabetical order and all the same size, printed in our dots, as the work on the wall is before it comes into view. Point at one and it develops into the site,
+     its colour coming down from the top; press it and the wheel turns to that client. It belongs to our own line: it fades as you leave it, as the signposts do.
+     The script sets its size (about half the window across, the whole width on a phone) and prints it. On a phone or an upright tablet it shows each site's phone page. */
+  .strip { position: absolute; left: 0; top: 0; z-index: 3; display: flex; gap: 4px; opacity: 0; pointer-events: none; }
+  .strip .thumb { position: relative; flex: none; display: block; padding: 0; border: 0; background: none; cursor: pointer; overflow: hidden; box-shadow: 0 0 0 1px rgba(23, 28, 12, .08); }      /* a hairline, as on the wall */
+  .strip canvas, .strip img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; }
+  .strip img { object-fit: cover; object-position: top; -webkit-user-drag: none;
+               -webkit-mask: linear-gradient(#000 33.3%, transparent 66.6%) 0 100% / 100% 300% no-repeat; mask: linear-gradient(#000 33.3%, transparent 66.6%) 0 100% / 100% 300% no-repeat;
+               transition: -webkit-mask-position .5s cubic-bezier(.2, .7, .2, 1), mask-position .5s cubic-bezier(.2, .7, .2, 1); }      /* the site lies over its print, hidden below a soft edge */
+  @media (hover: hover) { .strip .thumb:hover img { -webkit-mask-position: 0 0; mask-position: 0 0; } }      /* pointing brings its colour down over the print */
+  @media (prefers-reduced-motion: reduce) { .strip img { transition: none; } }
+  /* Book a free call: the strip's middle tile, in the place of the fifth picture and exactly the pictures' size, so the strip still reads as one row of nine
+     (2026-11-25, the user: "out of the 9 images only the center one should have been replaced by the button and they should all be the same size").
+     In our violet with paper words (5.6 to 1), and it says only "Book →" (the user: "make the book a free call be violet and only be book with the arrow but when hovered
+     it goes to book a free call and elongates the button"). Pointed at, or reached by the keyboard, it opens out on one line to "Book a free call →": it grows the same
+     way either side, over the pictures beside it, which stay where they are, at the pictures' height, in half a second, easing out as the menu's words roll.
+     (Persimmon, or butter with ?cta=butter, saying all of it in the tile: before-violet-book.html.) Its words are as large as the tile allows, 14, 12 or 10px (the script
+     fits them and measures how far it opens); on a phone's narrow tile "Book" and its arrow stand one over the other. It comes in with the strip, at its turn. */
+  .book { position: relative; z-index: 2; flex: none; display: flex; align-items: center; justify-content: center; overflow: hidden; white-space: nowrap;
+          width: var(--rest-w, 72px); margin: 0; font: 500 14px/18px var(--face); text-decoration: none; background: var(--accent); color: var(--on-accent);
+          transition: filter .2s ease; }
+  .book.ready { transition: width .5s cubic-bezier(0, 0, .2, 1), margin .5s cubic-bezier(0, 0, .2, 1), filter .2s ease; }      /* (once it has its size, so it does not grow into it on arrival) */
+  .book .b-in { display: block; }
+  .book .more { display: inline-block; vertical-align: top; max-width: 0; overflow: hidden; }
+  .book.ready .more { transition: max-width .5s cubic-bezier(0, 0, .2, 1); }
+  .book.stack { white-space: normal; text-align: center; } .book.stack .b-in { width: min-content; }      /* a phone's tile: "Book" over its arrow */
+  .book.stack:focus-visible { white-space: nowrap; } .book.stack:focus-visible .b-in { width: auto; }      /* opened from the keyboard, all of it on one line */
+  /* As it opens, the pictures make room for it and stay side by side (2026-11-25, the user: "the images should move as well and stay next to each other"; it opened over
+     them before: before-book-push.html): the row grows and moves back by half as much, so it grows the same either side and its middle stays in the middle of the window.
+     And every picture's print develops into the site, in colour, as one does when you point at it ("the pixels should transform into the actual site w colour"),
+     the two beside the button first and outward from there, 60ms apart. Both in half a second, easing out, as the button opens. */
+  #strip { transition: translate .5s cubic-bezier(0, 0, .2, 1); }
+  .book:focus-visible { width: var(--open-w); } .book:focus-visible .more { max-width: var(--more-w); }
+  #strip:has(.book:focus-visible) { translate: calc(var(--grow, 0px) / -2) 0; }
+  #strip:has(.book:focus-visible) .thumb img { -webkit-mask-position: 0 0; mask-position: 0 0; transition-delay: var(--d, 0ms); }
+  @media (hover: hover) {
+    .book:hover { width: var(--open-w); filter: brightness(1.1); }
+    .book:hover .more { max-width: var(--more-w); }
+    #strip:has(.book:hover) { translate: calc(var(--grow, 0px) / -2) 0; }
+    #strip:has(.book:hover) .thumb img { -webkit-mask-position: 0 0; mask-position: 0 0; transition-delay: var(--d, 0ms); }
+  }
+  @media (prefers-reduced-motion: reduce) { #strip { transition: none; } }
+  .book:active { translate: 0 1px; }
+  @media (prefers-reduced-motion: reduce) { .book, .book .more { transition: none; } }
+  /* ---------- the footer (2026-11-25). It waits under the foot of the window and comes up as the page goes down at the wall's end (the script moves it: see placeSide).
+     It is our paper still, the wall's own, so it reads as more of the page. Our name comes first, as wide as the footer, so it is what you see as the footer begins to show:
+     its ends curve down, like the top of the wheel coming over the edge, and it straightens as the footer settles (the script bends it letter by letter: see bendWord).
+     Under it: our pages, how to reach us, where to follow us, where we are; then the year and the way back to the top. It keeps clear of the words down the left side. */
+  .footer { position: fixed; left: 0; top: 100%; width: 100%; z-index: 4; visibility: hidden; touch-action: none; background: var(--paper) var(--page); color: var(--ink);
+            display: flex; flex-direction: column; gap: 44px; padding: 44px var(--edge) var(--edge-b) 140px; }
+  .f-word { margin: 0; display: flex; justify-content: center; white-space: nowrap; font: 500 var(--f-size, 200px)/var(--f-lh, 180px) var(--face); letter-spacing: -.05em; color: var(--ink); user-select: none; }
+  .f-word span { display: block; flex: none; transform-origin: 50% 100%; will-change: transform; }
+  .f-word b { font-weight: 500; color: var(--accent); }      /* our full stop, as at the end of our sentence */
+  .f-cols { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px; }
+  .f-col { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; font: 500 14px/20px var(--face); }
+  .f-col h2 { margin: 0 0 4px; font: 500 12px/16px var(--face); color: var(--grey); }
+  .f-col p { margin: 0; }
+  .f-col a { color: var(--ink); text-decoration: none; white-space: nowrap; transition: color .5s cubic-bezier(0, 0, .2, 1); }      /* an address stays on one line */
+  .f-base { display: flex; justify-content: space-between; align-items: center; gap: 16px; font: 500 12px/16px var(--face); color: var(--grey); }
+  .f-base button { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; transition: color .5s cubic-bezier(0, 0, .2, 1); }
+  @media (hover: hover) { .f-col a:hover { color: var(--accent); } .f-base button:hover { color: var(--ink); } }
+  .footer :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+  @media (max-width: 900px) {
+    .footer { padding-left: var(--edge); gap: 32px; padding-top: 32px; }
+    .f-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .nav { bottom: calc(var(--edge-b) + 4px + var(--foot-rise, 0px)); }      /* our words along the foot ride up on the footer's top edge, so it never comes up over them */
+  }
+  @media (max-width: 640px) { .f-cols { column-gap: 12px; } }      /* a phone: a narrower gap, so the address fits in its column */
+  .bare .nav, .bare .foot, .bare .go, .bare .try, .bare .how, .bare .cues, .bare .strip, .bare .book, .bare .footer { display: none !important; }      /* ?bare: the page with no controls, to sit behind mock-ups of other layouts */
+  .still * { transition: none !important; }      /* ?still: no fades, for taking pictures of one moment */
+</style>
+</head>
+<body class="on-paper">
+
+<nav class="nav" aria-label="Main">
+  <a class="mark" href="#" id="home" aria-label="CYStudios, home"><img class="logo" src="assets/logo.svg" alt="" width="18" height="26"></a>
+  <div class="pages"><a href="index.html?work" id="see" aria-controls="wall">Work</a><a href="services.html">Services</a><a href="about.html">About</a><a class="cta" id="contact" href="contact.html">Contact</a></div>
+</nav>
+<div class="foot">
+  <p class="meta" id="meta"></p>
+  <p class="trust" id="trust"><span>Trusted By:</span><span class="ticker"><span class="belt" id="belt"></span></span></p>
+</div>
+<a class="go off" id="go" href="#"><span class="long"></span><span class="short"></span></a>
+
+<main class="hero on-paper" id="hero" aria-label="We are CYStudios.">
+  <div id="media" aria-hidden="true"></div>
+  <div class="veil" aria-hidden="true"></div>
+  <h1 class="sr-only" id="said" aria-live="polite">We are CYStudios.</h1>
+  <div class="fade" id="lineFade"><div class="line" id="line" aria-hidden="true">
+    <div class="lead" id="lead"><span class="say">We are</span><span class="say">This is</span><span class="say">This is</span></div>
+    <div class="roll" id="roll"></div>
+    <span class="tail" id="tail"><b>.</b></span>
+  </div></div>      <!-- .fade: the window-sized box the sentence fades in as the page slides to the wall (the sentence's own box has no size) -->
+  <ul class="sr-only" id="keys" aria-label="Clients"></ul>
+  <!-- the hint "Scroll up or down, or pick a name" was here: taken out 2026-11-24 at the user's request (before-no-hint.html) -->
+  <span class="measure" id="measure" aria-hidden="true"></span>
+  <div class="cues" id="cues" aria-hidden="true">
+    <p class="cue up"><span class="arrow arw up">→</span><span class="say-cue">Clients’ Stories</span></p>
+    <p class="cue right"><span class="say-cue">Our Story</span><span class="arrow arw">→</span></p>
+  </div>
+  <!-- Book a free call: the strip's middle tile (2026-11-25, the user's request; the script puts it in the strip). Under the strip on its own just before: before-strip-tile.html -->
+  <a class="book" id="book" href="https://calendly.com/design-cy-studios/30min?utm_source=website&amp;utm_medium=home-strip" target="_blank" rel="noopener" aria-label="Book a free call (opens in a new tab)"><span class="b-in">Book<span class="more">&nbsp;a free call</span>&nbsp;<span class="arw ne">→</span></span></a>
+</main>
+
+<section class="wall" id="wall" aria-label="What we do, and our work">
+  <div class="intro" id="intro">
+    <!-- the user's words (2026-11-25); the lede and grey paragraph before them are in before-intro-copy.html -->
+    <p class="lede">We are a <strong>digital studio</strong> that helps small businesses share their stories online. We first started to help our parents’ businesses get a jump start through online <strong>media and marketing</strong>, and it worked. We want to do the same for you<b>.</b></p>
+    <button class="on" type="button" id="toWork">Keep going to see our work <span class="arw">→</span></button>
+  </div>
+  <!-- photographs from the family album: our parents and their businesses (the user's own, 2026-11-25; cropped to the print and turned upright, in assets/family) -->
+  <div class="memories" id="memories" aria-hidden="true">
+    <img src="assets/family/shoulders.jpg" alt="" data-shape="0.705" decoding="async">
+    <img src="assets/family/counter.jpg" alt="" data-shape="1.418" decoding="async">
+    <img src="assets/family/family.jpg" alt="" data-shape="1.515" decoding="async">
+    <img src="assets/family/open-sign.jpg" alt="" data-shape="0.678" decoding="async">
+    <span class="pin" id="pin"><svg viewBox="0 0 44 48" aria-hidden="true">
+      <defs>
+        <radialGradient id="pinRed" cx="38%" cy="32%" r="68%"><stop offset="0" stop-color="#F2B0A4"/><stop offset=".24" stop-color="#E57766"/><stop offset=".5" stop-color="#E05A44"/><stop offset=".8" stop-color="#B23F2C"/><stop offset="1" stop-color="#691D12"/></radialGradient>      <!-- persimmon, the kit's #E05A44, lit and shaded in its own hue (a brighter red before: before-persimmon-pin.html) -->
+        <linearGradient id="pinSteel" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FAFAF7"/><stop offset=".45" stop-color="#B9B9B3"/><stop offset="1" stop-color="#6A6A65"/></linearGradient>
+        <filter id="pinSoft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.7"/></filter>
+      </defs>
+      <ellipse cx="27" cy="38" rx="10" ry="4.2" fill="#0C0D0A" opacity=".3" filter="url(#pinSoft)" transform="rotate(-14 27 38)"/>      <!-- the head's shadow on the print -->
+      <line x1="14" y1="40" x2="24.5" y2="38.4" stroke="#0C0D0A" stroke-opacity=".3" stroke-width="1.6" stroke-linecap="round" filter="url(#pinSoft)"/>      <!-- the needle's shadow -->
+      <line x1="14" y1="40" x2="22.5" y2="24" stroke="url(#pinSteel)" stroke-width="2.2" stroke-linecap="round"/>      <!-- the needle -->
+      <circle cx="14" cy="40" r="1.2" fill="#3A3A36" opacity=".55"/>      <!-- where it goes into the print -->
+      <ellipse cx="22" cy="25.4" rx="4.6" ry="2.4" fill="#691D12" transform="rotate(-28 22 25.4)"/>      <!-- the collar under the head -->
+      <circle cx="25" cy="16" r="12.5" fill="url(#pinRed)"/>      <!-- the ball head -->
+      <ellipse cx="20.4" cy="10.4" rx="4" ry="2.5" fill="#FFF" opacity=".78" transform="rotate(-28 20.4 10.4)"/>      <!-- its highlight -->
+      <path d="M15.2 23.2 A12.5 12.5 0 0 0 33.4 25.6" fill="none" stroke="#F2B0A4" stroke-opacity=".34" stroke-width="1.2" stroke-linecap="round"/>      <!-- light off the paper, on its underside -->
+    </svg></span>
+  </div>
+</section>
+
+<!-- The footer (2026-11-25, the user's request): where the wall ends the page goes down, and this comes up. Our name, very large, curved down at its ends as it comes
+     into view and straightening as it settles; under it what a footer carries. Every link is one the site already had (the contact page's): nothing is made up. -->
+<footer class="footer" id="footer">
+  <p class="f-word" id="fWord" aria-hidden="true"></p>
+  <div class="f-cols">
+    <nav class="f-col" aria-label="Pages"><h2>Pages</h2><a href="index.html?work" id="fWork">Work</a><a href="services.html">Services</a><a href="about.html">About</a><a href="contact.html">Contact</a></nav>
+    <div class="f-col"><h2>Say hello</h2><a href="mailto:design@cy-studios.com">design@cy-studios.com</a><a href="https://calendly.com/design-cy-studios/30min?utm_source=website&amp;utm_medium=footer" target="_blank" rel="noopener">Book a free call <span class="arw ne">→</span></a></div>
+    <div class="f-col"><h2>Follow</h2><a href="https://www.instagram.com/_cystudios/" target="_blank" rel="noopener">Instagram <span class="arw ne">→</span></a></div>
+    <div class="f-col"><h2>Based in</h2><p>Los Angeles, New York and Chicago</p></div>
+  </div>
+  <div class="f-base"><span>© 2026 CYStudios</span><button type="button" id="fTop">Back to top <span class="arw up">→</span></button></div>
+</footer>
+
+<section class="all" id="all" aria-label="All work" inert>
+  <h2 class="sr-only">All work</h2>
+  <canvas class="dotgrid" id="dotgrid" aria-hidden="true"></canvas>
+  <div class="drum" id="drum" aria-hidden="true"></div>
+  <ul class="sr-only" id="works" aria-label="All work"></ul>
+</section>
+
+<script>
+const q = new URLSearchParams(location.search);
+// The paper is hanji: long mulberry fibres over a soft cloud (assets/hanji.png and hanji-cloud.png, made by screenshots/tool/hanji.mjs).
+// ?paper=grain shows the dust-fleck grain it had before, for comparing (paper-compare.html).
+if (q.get('paper') === 'grain') document.documentElement.style.setProperty('--paper', 'url(assets/grain.png) 0 0 / 400px 400px');
+// ---------- the clients, in alphabetical order: a list has no head seat, and the alphabet ranks no one.
+// clip: the film that fills the window when their name is on the line. For now it is their site slowly scrolling (made by screenshots/tool/scroll-clip.mjs);
+// when an interview is filmed, put its file here instead and it will play the same way.
+// tint: the colour their own site uses for its name, its seal or its buttons, read from the first frame of their film. on: whether ink or paper words read on it (all are 4.5 to 1 or better).
+const CLIENTS = [
+  { file: '07-beauty-one',       name: 'Beauty One',       kind: 'beauty',    what: 'Beauty',                place: '',         url: 'https://beautyone.vercel.app/concepts/01-editorial-premium/index.html', tint: '#C9B9A0', on: 'ink' },
+  { file: '01-boyang',           name: 'Boyang',           kind: 'food',      what: 'Black goat soup house', place: 'Flushing', url: 'https://www.boyangkfoodnynj.com/', tint: '#984E4E', on: 'page' },
+  { file: '05-burgshaw',         name: 'Burg & Shaw',      kind: 'food',      what: 'Burgers and shawarma',  place: '',         url: 'https://burgshaw.com/', tint: '#FC7404', on: 'ink' },
+  { file: '06-cafe-joie',        name: 'Cafe Joie',        kind: 'food',      what: 'Korean café',           place: 'Flushing', url: 'https://cafe-joie.vercel.app/', tint: '#1C2C44', on: 'page' },
+  { file: '08-framer-site',      name: 'Colorbridge',      kind: 'community', what: 'Nonprofit creative community', place: '',  url: 'https://resourceful-contributors-601922.framer.app/', tint: '#6F689D', on: 'page' },
+  { file: '02-nakwon-catering',  name: 'Nakwon Catering',  kind: 'food',      what: 'Catering',              place: '',         url: 'https://www.nakwoncateringla.com/', tint: '#AC8850', on: 'ink' },
+  { file: '04-pj-beauty-supply', name: 'PJ Beauty Supply', kind: 'beauty',    what: 'Beauty supply',         place: 'Chicago',  url: 'https://pjbeautysupply2.vercel.app/', tint: '#FC7CAC', on: 'ink' },
+  { file: '09-senshi',           name: 'Senshi',           kind: 'sport',     what: 'Fight sports',          place: 'Queens',   url: 'https://senshiglobal.us/', tint: '#FC2C1C', on: 'ink' },
+  { file: '03-tofu-story',       name: 'Tofu Story',       kind: 'food',      what: 'Korean restaurant',     place: '',         url: 'https://tofu-story-henna.vercel.app/', tint: '#B8362E', on: 'page' },
+].map((c) => ({ ...c, label: c.name, sub: c.what + (c.place ? ', ' + c.place : ''), clip: c.clip || `assets/clips/${c.file}.mp4`, still: `assets/clips/${c.file}.jpg`,
+  tallClip: c.tallClip || c.clip || `assets/clips-phone/${c.file}.mp4`, tallStill: `assets/clips-phone/${c.file}.jpg`, square: `assets/roll/${c.file}.jpg` }));
+// tallClip: the same film of the site as a phone shows it (made by scroll-clip.mjs --phone), for windows that are taller than they are wide.
+// A phone-shaped window then shows the client's whole phone page, not the middle strip of the desktop one. An interview given as `clip` is used for both shapes unless a tall one is given too.
+// square: the top of their site photographed in a square window, for the camera roll of all clients (made by scroll-clip.mjs --square). The site lays itself out for the square, so nothing is cropped.
+// The first name on the wheel is our own: "We are CYStudios." Every other line reads "This is ..." and introduces a client.
+// Behind our own line is the bare hanji (with ?sheet=1, the proof sheet: all nine sites printed in our dots; see "the print", below the card).
+const US = { us: true, name: 'CYStudios', label: 'CYStudios', sub: 'A Digital Studio specializing in web, social, and creative experiences.', kind: 'all' };      // the user's words, 2026-11-25 ("Digital studio: websites, social media, influencer outreach" before: before-cta-centre.html)
+const FILTERS = [['all', 'All'], ['food', 'Food'], ['beauty', 'Beauty'], ['sport', 'Sport'], ['community', 'Community']];
+const STILL = q.has('still'), REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches, COARSE = matchMedia('(pointer: coarse)').matches;      // COARSE: a finger, not a mouse
+const mod = (n, m) => ((n % m) + m) % m, clamp = (v, a, b) => Math.min(b, Math.max(a, v)), smooth = (v) => v * v * (3 - 2 * v);
+
+// ---------- the page behind: one layer per client, plus the bare paper
+// Which film a window gets depends on its shape: taller than wide (a phone, or a tablet held upright) gets the phone film, anything else the desktop one.
+const isTall = () => innerWidth / innerHeight < 0.85;
+let TALL = isTall();
+const film = (c) => (TALL ? c.tallClip : c.clip), poster = (c) => (TALL ? c.tallStill : c.still);
+const hero = document.getElementById('hero'), media = document.getElementById('media'), roll = document.getElementById('roll'), tail = document.getElementById('tail'), lead = document.getElementById('lead'), says = [...document.querySelectorAll('.say')],
+  line = document.getElementById('line'), meta = document.getElementById('meta'), go = document.getElementById('go'), goLong = go.querySelector('.long'), goShort = go.querySelector('.short'), how = document.getElementById('how'), said = document.getElementById('said'), measure = document.getElementById('measure');
+CLIENTS.forEach((c) => {
+  const v = document.createElement('video'); v.className = 'layer'; v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'metadata'; v.poster = poster(c); v.src = film(c);
+  v.onerror = () => { const im = new Image(); im.className = v.className; im.src = `assets/sites/${c.file}.webp`; im.alt = ''; im.style.opacity = v.style.opacity; im.style.zIndex = v.style.zIndex; im.style.transform = v.style.transform; v.replaceWith(im); c.layer = im; };      // no film yet: show a still of the site
+  media.append(v); c.layer = v;
+});
+US.layer = document.createElement('div'); US.layer.className = 'layer paper on'; media.append(US.layer);
+
+// ---------- the roll
+// The list is a wheel: `at` is which name is on the line (it can sit between two while turning), and `goal` is the name it is settling on.
+let list = [], loop = true, at = 0, goal = 0, rest = 0, shown = null, pointed = null, wheeling = 0, drag = null, lh = 20, pitch = 27, widths = new Map(), leadW = 0, tailW = 0, rollX = 0;
+// The wheel shows nine names at once: the one on the line and four each side. STEP is the angle between neighbours; the drum's size follows from how far apart they sit at the front.
+const SHOW = 9, STEP = 16 * Math.PI / 180, GLIDE = 11.5;
+let half = 4;
+const entryAt = (i) => loop ? list[mod(i, list.length)] : list[i];
+const pool = Array.from({ length: SHOW + 4 }, () => { const b = document.createElement('button'); b.type = 'button'; b.className = 'name'; b.tabIndex = -1; roll.append(b); return { el: b, i: null, h: 0 }; });
+pool.forEach((p) => {
+  p.el.onclick = () => { if ((drag && drag.moved) || S.cur > 1 || S.dragged) return; stopIntro(); touched(); if (p.i === Math.round(at)) open(entryAt(p.i)); else goal = p.i; };
+  // pointing at a name only changes the name: it goes from faint to full ink and comes into focus. What is behind the sentence stays as it is.
+  // (Pointing used to bring that client's site up behind for a moment: before-hover-colour.html.)
+  p.el.onpointerenter = (e) => { if (e.pointerType === 'mouse') pointed = entryAt(p.i) || null; };
+  p.el.onpointerleave = () => { pointed = null; };
+});
+function widthOf(text) { if (!widths.has(text)) { measure.textContent = text; widths.set(text, measure.getBoundingClientRect().width); } return widths.get(text); }
+// Lay the sentence out: the first words, then the names, then the full stop; the whole thing sits in the middle of the window.
+function layout() {
+  widths.clear(); lh = parseFloat(getComputedStyle(line).lineHeight);
+  const fs = parseFloat(getComputedStyle(line).fontSize), gap = fs * 0.27; pitch = 2 * Math.round(fs * (COARSE ? 1 : 0.75));      // on the 2/4 grid (2026-11-25; fs * 1.5, 27px at 18, before: before-grid.html)      // for a finger the names sit further apart, so each is easy to tap
+  line.style.setProperty('--hit', `${(pitch - lh) / 2}px`);
+  leadW = Math.max(widthOf('We are'), widthOf('This is')); tailW = widthOf('.');
+  const longest = Math.max(...[...CLIENTS, US].map((e) => widthOf(e.label)));
+  // (Before 2026-11-25 the line was centred for the longest client's name, so ours sat left of the middle: before-strip.html. A longer client's name runs on to the right,
+  // but never past the window's edge.)
+  // Our name itself, "CYStudios", stands in the very middle of the window (2026-11-25, the user: "centering CYStudios in the center viewport not We are CYStudios";
+  // the whole sentence was centred just before: before-narrow-centre.html), so "We are" sits to its left. It is on the same middle line as "Clients' Stories" and the strip.
+  const furthest = leadW + gap + longest + tailW;
+  const left = clamp(innerWidth / 2 - (leadW + gap + widthOf(US.label) / 2), 16, Math.max(16, innerWidth - 16 - furthest));
+  rollX = leadW + gap; line.style.left = `${left}px`; lead.style.width = `${leadW}px`; roll.style.left = `${rollX}px`; roll.style.width = `${longest}px`;
+  line.dataset.gap = gap; fitHalf(); layoutStrip();
+}
+// How many names show each side of the line: four, fewer if the list is short (so none appears twice) or the window is too short to hold them between the bar and the bottom row.
+const reach = (h) => Math.sin(h * STEP) * (pitch / STEP) + lh;
+function fitHalf() {
+  let h = Math.min((SHOW - 1) / 2, Math.floor((Math.max(list.length, 2) - 1) / 2));
+  const room = innerHeight / 2 - (innerWidth <= 640 ? 124 : innerWidth <= 1000 ? 120 : 96);
+  while (h > 1 && reach(h) > room) h--;
+  half = h; hero.style.setProperty('--reach', `${reach(h)}px`);
+}
+// The list no longer goes round. Our name is the last one, at the bottom, and every client sits above it, A at the top to Z just above us:
+// you scroll UP to go through the work, and below "We are CYStudios." there is nothing. (The wheel that went round, with clients both sides of us, is kept in before-clients-above.html.)
+const LAST = () => list.length - 1;
+const ends = (v) => (loop ? v : clamp(v, 0, LAST()));
+function setList(kind) {
+  const keep = shown;
+  list = [...CLIENTS.filter((c) => kind === 'all' || c.kind === kind), US]; loop = false;
+  fitHalf();
+  setWorks();                                                            // the big wheel of all the work carries the same clients
+  const k = list.indexOf(keep); at = goal = rest = k >= 0 ? k : list.indexOf(US); intro = null;
+  pool.forEach((p) => { p.i = null; });
+}
+function open(e) { if (!e) return; if (e.us) location.href = 'about.html'; else window.open(e.url, '_blank', 'noopener'); }      // a client's name opens their site; ours opens the page about us
+function contact() { if (allOpen) closeAll(); stopIntro(); goal = nearest(list.indexOf(US)); S.goal = 0; F.goal = 0; touched(); }            // brings "We are CYStudios." back to the line (our name in the bar does this)
+const nearest = (i) => { if (!loop) return i; const n = list.length, here = Math.round(at); let k = here + mod(i - here, n); if (k - here > n / 2) k -= n; return k; };
+function touched() { if (how) how.classList.add('seen'); }      // the hint is gone, so there is nothing to hide
+// On arrival the wheel rolls up through every name, from the first client to ours, and settles on ours with all the clients stacked above. Anything the visitor does stops it where it is.
+// The logos who trust us, for the ticker at the foot of our own line (see .trust): [file in assets/old-logos/colour, name, its shape (width over height), its strength].
+// In their own colours since 2026-11-25 (the user: "can we have the logo ticker have colours"; in our ink, with Colorbridge lighter, before: before-black-contact.html).
+const TRUST = [['burg-shaw', 'Burg & Shaw', 180 / 160, 1], ['colorbridge', 'Colorbridge', 287 / 160, 1], ['nakwon-catering', 'Nakwon Catering', 446 / 160, 1], ['sool-story', 'Sool Story', 307 / 160, 1], ['tofu-story', 'Tofu Story', 176 / 160, 1]];
+const trust = document.getElementById('trust'), belt = document.getElementById('belt'), LOGO_AREA = 560, BELT_SPEED = 26;      // each logo covers 560 square pixels; the belt moves 26px a second
+(function fillBelt() {
+  let one = 0;
+  for (let copy = 0; copy < 3; copy++) TRUST.forEach(([file, name, shape, ink]) => {
+    const im = new Image(), w = Math.sqrt(LOGO_AREA * shape), h = Math.sqrt(LOGO_AREA / shape);      // the same area for every logo: a wide one is lower, a squarer one taller
+    im.src = `assets/old-logos/colour/${file}.png`; im.decoding = 'async'; im.alt = copy ? '' : name; if (copy) im.setAttribute('aria-hidden', 'true');
+    im.style.width = `${w.toFixed(1)}px`; im.style.height = `${h.toFixed(1)}px`; im.style.opacity = ink; belt.append(im);
+    if (!copy) one += w + 28;
+  });
+  belt.style.setProperty('--belt-dur', `${(one / BELT_SPEED).toFixed(2)}s`);
+})();
+// our parents' photographs, pinned up above the words on the wall (see .memories and the pinned stack, below the wall's layout)
+const memories = document.getElementById('memories'), memPics = [...memories.querySelectorAll('img')], pin = document.getElementById('pin'), PILE_BEAT = +q.get('pilebeat') || 2400, PILE_FIRST = 900;
+const MEM = { order: memPics.map((im, i) => i), last: 0, since: 0, busy: false, anchor: null, pinY: 12, turns: [-4, 3.5, -2, 5, -3] };      // order: top of the stack first; turns: each print's own angle on the pin
+let intro = null, opening = false, cueShown = -1;
+const cues = document.getElementById('cues');
+// the strip of the work under our line (see .strip): one picture for each client, in the order of the list, each its print with the site over it
+const bookBtn = document.getElementById('book');      // Book a free call, under our sentence
+const strip = document.createElement('div'); strip.className = 'strip'; strip.id = 'strip'; cues.after(strip);
+const thumbs = CLIENTS.map((c) => {
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'thumb'; b.tabIndex = -1; b.setAttribute('aria-hidden', 'true'); b.c = c; b.key = '';      // the names on the wheel, and the list for the keyboard, already carry the same choice
+  b.cv = document.createElement('canvas'); b.im = document.createElement('img'); b.im.alt = ''; b.im.decoding = 'async'; b.im.draggable = false;
+  b.append(b.cv, b.im); strip.append(b);
+  b.onclick = () => { if ((drag && drag.moved) || S.cur > 1 || S.dragged) return; const i = list.indexOf(c); if (i < 0) return; stopIntro(); touched(); goal = nearest(i); };      // the wheel turns to them
+  return b;
+});
+// the middle tile is Book a free call (2026-11-25, the user's request): it takes the fifth picture's place, so the strip is still nine across, four either side of it
+const BOOK_AT = Math.floor(thumbs.length / 2); thumbs.splice(BOOK_AT, 1)[0].remove(); strip.insertBefore(bookBtn, thumbs[BOOK_AT]);
+// the face's own measures at a size, as the page lays it out: how far it reaches above and below the baseline, and how tall its capitals are
+const lettersAt = new Map(), letterPen = document.createElement('canvas').getContext('2d');
+function letters(fs) {
+  const font = `500 ${fs}px ${getComputedStyle(document.documentElement).getPropertyValue('--face')}`, key = font + (document.fonts && document.fonts.check(font) ? '' : ' (still loading)');      // measured again once the face has come
+  if (lettersAt.has(key)) return lettersAt.get(key);
+  letterPen.font = font;
+  const m = letterPen.measureText('H'), out = { asc: m.fontBoundingBoxAscent ?? fs * 0.969, desc: m.fontBoundingBoxDescent ?? fs * 0.242, cap: m.actualBoundingBoxAscent || fs * 0.727 };
+  lettersAt.set(key, out); return out;
+}
+// On a phone Our Story stands under the button, at the right, 14px down; on a short phone there is no room for it above the foot, so it stands beside the sentence instead
+function placeOurStory() {
+  const r = cues.querySelector('.cue.right'), ft = document.querySelector('.foot'), phone = innerWidth <= 640;
+  const end = parseFloat(hero.style.getPropertyValue('--say-end')) || 0, footTop = ft.getBoundingClientRect().top - (parseFloat(getComputedStyle(ft).translate.split(' ')[1]) || 0);
+  r.classList.toggle('beside', phone && end + 14 + 16 + 12 > footTop);      // it is 16px tall, and keeps 12px clear of the foot
+}
+// its size and place: a row about half the window across (the whole width on a phone), centred under our sentence, 36px below its letters
+function layoutStrip() {
+  const W = innerWidth, H = innerHeight, phone = W <= 640, n = thumbs.length + 1, gap = 4;      // the pictures and our tile
+  const SW = phone ? W - 32 : clamp(Math.round(W * 0.56), 420, 840), tw = (SW - gap * (n - 1)) / n, th = tw / (TALL ? 780 / 1688 : 1.6);      // the stills' own shape: a computer's, or a phone's
+  const m1 = letters(parseFloat(getComputedStyle(line).fontSize)), top = Math.round(H / 2 + (m1.asc - m1.desc) / 2 + 36);      // 36px under the sentence's baseline (the 2/4 grid; 32px under its line box before: before-grid.html)
+  strip.style.left = `${Math.round((W - SW) / 2)}px`; strip.style.top = `${top}px`; hero.style.setProperty('--strip-end', `${Math.round(top + th)}px`);
+  // Book a free call, the middle tile, the pictures' size, its words as large as fit: 14, 12 or 10px
+  // "Book →" as large as fits the tile (14, 12 or 10px, 6px clear each side), or on a phone's narrow tile "Book" over its arrow; and how far it opens for all of it
+  const inner = bookBtn.querySelector('.b-in'), more = bookBtn.querySelector('.more');
+  bookBtn.style.setProperty('--rest-w', `${tw}px`); bookBtn.style.height = `${th}px`; bookBtn.classList.remove('stack');
+  const fits = [14, 12, 10].some((fs) => { bookBtn.style.fontSize = `${fs}px`; bookBtn.style.lineHeight = `${fs + 4}px`; return inner.getBoundingClientRect().width + 12 <= tw; });
+  if (!fits) { bookBtn.style.fontSize = '12px'; bookBtn.style.lineHeight = '16px'; }
+  const moreW = Math.ceil(more.scrollWidth), openW = 2 * Math.ceil((inner.getBoundingClientRect().width + moreW + 32) / 2);      // all of it on one line, 16px clear each side, to the even pixel
+  bookBtn.style.setProperty('--more-w', `${moreW}px`); bookBtn.style.setProperty('--open-w', `${Math.max(openW, tw)}px`);
+  strip.style.setProperty('--grow', `${Math.max(openW, tw) - tw}px`);      // how much longer the row is while it is open
+  thumbs.forEach((b, i) => { const far = Math.abs((i < BOOK_AT ? i : i + 1) - BOOK_AT); b.style.setProperty('--d', `${(far - 1) * 60}ms`); });      // the two beside it develop first
+  bookBtn.classList.toggle('stack', !fits);
+  if (!bookBtn.classList.contains('ready')) requestAnimationFrame(() => requestAnimationFrame(() => bookBtn.classList.add('ready')));
+  hero.style.setProperty('--say-end', `${Math.round(top + th)}px`); placeOurStory();
+  thumbs.forEach((b) => { b.style.width = `${tw}px`; b.style.height = `${th}px`; b._w = tw; b._h = th; const src = poster(b.c); if (b.im.getAttribute('src') !== src) b.im.src = src; });
+  printStrip();
+}
+// each picture's print: the same screen as the wall's, finer for these small pictures (about 36 dots across, never under 1.5px)
+function printStrip() {
+  const dpr = Math.min(2, window.devicePixelRatio || 1), ink = inkColour();
+  thumbs.forEach((b) => {
+    if (!b._w) return;
+    const w = b._w, h = b._h, cell = clamp(w / 36, 1.5, 4.2), im = pic(poster(b.c)), key = [w, h, dpr, im.src, +(im.complete && im.naturalWidth > 0)].join();
+    if (key === b.key) return; b.key = key;
+    b.full = b.full || document.createElement('canvas'); b.full.width = b.cv.width = Math.round(w * dpr); b.full.height = b.cv.height = Math.round(h * dpr);      // the finished print, kept to build from
+    const x = b.full.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, w, h); x.fillStyle = ink;
+    if (im.complete && im.naturalWidth) halftone(x, im, cover(im.naturalWidth, im.naturalHeight, w, h), { x: 0, y: 0, w, h }, cell);
+    if (b.build && !b.build.done) b.build.done = true;      // the window changed while it was being built: show it whole
+    b.cv.getContext('2d').drawImage(b.full, 0, 0);
+  });
+}
+// The strip prints itself, one picture at a time, in pixels (2026-11-25, the user: "instead of it coming from outside can we have it form 1 by 1 in pixel form";
+// pushed in from the foot before: before-pixel-strip.html). Each picture is cut into squares PX wide. They land in no order over EACH ms, each first as a light square
+// of our violet, then, FLASH ms later, as that piece of the print, so the picture is pieced together and settles into its dots. The next picture starts GAP ms after.
+// Its frame (the hairline) comes with its first square. With less motion asked for, the strip is simply there.
+const PX = 6, EACH = 480, GAP = 120, FLASH = 110;
+function formStrip(delay) {
+  const start = performance.now() + delay;
+  thumbs.forEach((b, i) => {
+    if (!b.full) return;
+    const W = b.cv.width, H = b.cv.height, k = W / b._w, px = PX * k, cells = [];
+    for (let y = 0; y < H; y += px) for (let x = 0; x < W; x += px) cells.push({ x, y, w: Math.min(px, W - x), h: Math.min(px, H - y), t: start + (i < BOOK_AT ? i : i + 1) * GAP + Math.random() * EACH, s: 0 });      // its place in the row (our tile is the middle one)
+    b.build = { cells, left: cells.length, done: false };
+    b.cv.getContext('2d').clearRect(0, 0, W, H); b.style.boxShadow = 'none';
+  });
+  bookBtn.animate([{ opacity: 0 }, { opacity: 1 }], { duration: EACH, delay: Math.max(0, start - performance.now()) + BOOK_AT * GAP + EACH / 2, easing: 'ease-out', fill: 'backwards' });      // our tile, at its turn
+  const ink = inkColour();
+  const step = (now) => {
+    let busy = false;
+    thumbs.forEach((b) => {
+      const f = b.build; if (!f || f.done) return;
+      const x = b.cv.getContext('2d');
+      f.cells.forEach((c) => {
+        if (c.s === 2) return;
+        if (now >= c.t + FLASH) { x.clearRect(c.x, c.y, c.w, c.h); x.drawImage(b.full, c.x, c.y, c.w, c.h, c.x, c.y, c.w, c.h); c.s = 2; f.left--; }      // the piece of the print
+        else if (now >= c.t && c.s === 0) { x.globalAlpha = 0.35; x.fillStyle = ink; x.fillRect(c.x, c.y, c.w, c.h); x.globalAlpha = 1; c.s = 1; b.style.boxShadow = ''; }      // a pixel of violet first
+      });
+      if (f.left <= 0) f.done = true; else busy = true;
+    });
+    if (busy) requestAnimationFrame(step);
+    else thumbs.forEach((b) => { b.style.boxShadow = ''; if (b.full) { const x = b.cv.getContext('2d'); x.clearRect(0, 0, b.cv.width, b.cv.height); x.drawImage(b.full, 0, 0); } });      // and whole, exactly
+  };
+  requestAnimationFrame(step);
+}
+function stopIntro() { if (intro) { intro = null; goal = rest = Math.round(at); } }
+// Once the opening roll has settled, everything round the wheel is pushed in from outside the window, one after another (2026-11-25, the user: "like they were displaced
+// outside of the screen and got pushed in ... starting from our logo all the way to clients' stories ... a steep ease out"). Each starts just past the edge nearest it, out of
+// sight, and comes in to its place: the logo, Work, Services, About and Contact from the left (from the foot on a narrower window, where they stand along it), the line from
+// the foot, Our Story from the right and Clients' Stories from the top. The next follows 70ms after, and each takes a second on a steep ease-out: most of the way at once,
+// then a long settle: about two thirds of the way in the first 50ms (steeper since 2026-11-25; the first curve, .1 .9 .15 1, in before-steeper.html). (Dropping in out of a blur, from the logo down, before: before-pushed-in.html.)
+const INTRO = +q.get('introdur') || 2300;
+function arrive() {
+  opening = false; document.body.classList.remove('opening');
+  if (REDUCED) return;
+  const nav = document.querySelector('.nav'), W = innerWidth, H = innerHeight, side = W > 900, STEEP = 'cubic-bezier(.02, 1, .05, 1)', STEP = +q.get('pushstep') || 90, OUT = 12, TIME = 1400;      // a little slower since 2026-11-25 (1s and 70ms apart before: before-slower-push.html)
+  const from = { left: (r) => `${-(r.right + OUT)}px 0`, right: (r) => `${W - r.left + OUT}px 0`, top: (r) => `0 ${-(r.bottom + OUT)}px`, bottom: (r) => `0 ${H - r.top + OUT}px` };
+  const ours = side ? 'left' : 'bottom';
+  const items = [[nav.querySelector('.mark'), ours], ...[...nav.querySelectorAll('.pages a')].map((a) => [a, ours]), ...(document.querySelector('.foot').classList.contains('ours') ? [[trust, 'bottom'], [meta, 'bottom']] : [[meta, 'bottom']]), [cues.querySelector('.cue.right'), 'right'], [cues.querySelector('.cue.up'), 'top']];
+  items.forEach(([el, edge], i) => {
+    const r = el && el.getBoundingClientRect(); if (!r || !r.width) return;      // (the line is not shown on a very short window)
+    el.animate([{ translate: from[edge](r) }, { translate: '0 0' }], { duration: TIME, delay: i * STEP, easing: STEEP, fill: 'backwards' });
+  });
+  formStrip(items.length * STEP);      // and last the strip of the work prints itself, in pixels, one picture after another
+}
+// the stills the opening shows (the films' first frames), so each site is there when its name crosses the line; it waits for them at most 1.5 seconds
+function readyPreviews() {
+  const wait = (ms) => new Promise((ok) => setTimeout(ok, ms));
+  return Promise.race([Promise.all(CLIENTS.map((c) => { const im = pic(poster(c)); return im.decode ? im.decode().catch(() => {}) : null; })), wait(1500)]);
+}
+
+// what changes when a new name reaches the line
+function show(e) {
+  const says = e.us ? 'We are CYStudios.' : `This is ${e.name}.`;
+  shown = e; hero.setAttribute('aria-label', says); said.textContent = says; meta.textContent = e.sub; foot.classList.toggle('ours', !!e.us); paint();      // our own line: who trusts us
+}
+// The button at the bottom right follows what is on screen. On a client's line it visits their site, in their colour.
+// On our own line, or on the roll of all clients (which is our own paper), there is none: Contact is in the bar. (It said "Contact →" there before: before-gradient-bar.html.)
+function paint() {
+  const e = allOpen ? US : shown; if (!e) return;
+  go.classList.toggle('off', !!e.us);
+  if (!e.us) {      // on our line it keeps the last client's words and colour while it sinks away
+    goLong.innerHTML = `Visit ${e.name}’s site <span class="arw ne">→</span>`; goShort.innerHTML = 'Visit site <span class="arw ne">→</span>';      // the one arrow, up and to the right
+    go.href = e.url; go.target = '_blank'; go.rel = 'noopener'; go.setAttribute('aria-label', `Visit ${e.name}’s site (opens in a new tab)`);
+    document.body.style.setProperty('--who', e.tint); document.body.style.setProperty('--who-ink', e.on === 'ink' ? 'var(--ink)' : 'var(--page)');
+  }
+  document.body.classList.toggle('on-paper', allOpen || paperBehind());
+}
+// What is behind the sentence, as it was when the page was first built: every name that crosses the line brings its site up, its film starts at once, and it comes and goes in a
+// soft fade of 0.7 seconds, so the sites flash by as the wheel turns.
+// One thing is different from then. A site arriving fades in OVER the sites already there, and the last one that was whole stays whole underneath until something covers it.
+// Before, the old site faded away at the same time as the new one came, and on a quick scroll no site was ever whole, so the dark page showed through as a black flash.
+// Each layer has a strength p (0 to 1), a place in the pile z (newer is higher), and is either rising or not:
+//   - the site behind the sentence rises. So does one you have just left if it was already about half there, so at an ordinary scroll each site finishes arriving while the next
+//     comes in over it, and only on a very quick scroll are the sites in between passed as faint flashes;
+//   - when a layer becomes whole, everything under it is dropped, since it can no longer be seen;
+//   - any other layer that is partly there (a site passed quickly) fades away.
+// How long a site takes to arrive depends on how fast names are crossing the line. One step on its own gets the soft 0.7 seconds. While you are scrolling through,
+// each site arrives in about as long as its name is on the line, so it is whole, or nearly, for its brief moment and you fly through them all;
+// it does not sit on the site you started from until the wheel stops.
+let behind = null, stack = 0, crossed = -1e9;
+const FADE = 0.7, QUICK = 0.14, LAYERS = [...CLIENTS, US];
+LAYERS.forEach((c) => { c.p = 0; c.o = -1; c.z = 0; c.rising = false; c.dur = FADE; c.from = false; });
+function showBehind(e, atOnce) {
+  if (e !== behind) {
+    if (behind && behind.layer.pause) behind.layer.pause();      // the site being covered holds its last frame; only the site behind the sentence plays, so one film runs at a time
+    const now = performance.now(), gap = (now - crossed) / 1000; crossed = now;
+    e.dur = clamp(Math.min(gap * 1.15, Math.abs(goal - at) > 1.2 ? 0.2 : FADE), QUICK, FADE);      // also quick when the wheel still has more than a name to travel: this one is being passed
+    if (behind) behind.dur = Math.min(behind.dur, e.dur);          // the one just left finishes at the new pace, not its old slow one
+    behind = e;
+    // Our proof sheet. Coming off our line while the sheet is whole, a client's site grows out of its own frame on the sheet (`from`): its print fills with colour and opens
+    // out to the card. Going back to our line from a site, the sheet is there at once, underneath, and the site shrinks back into its frame and sinks into the print.
+    if (SHEET.on) {
+      const sheetWhole = US.p >= 1 && !CLIENTS.some((c) => c.p >= 1);
+      if (!e.us) { if (e.p === 0) e.from = sheetWhole && !intro; }
+      else if (US.p === 0) {
+        US.z = Math.min(...CLIENTS.map((c) => c.z)) - 1; US.layer.style.zIndex = US.z; US.p = 1;
+        CLIENTS.forEach((c) => { if (c.p > 0) { c.from = true; c.rising = false; c.p = Math.min(c.p, 0.9999); } });
+      }
+    }
+    if (e.p === 0) { e.z = ++stack; e.layer.style.zIndex = e.z; }          // a site not yet on screen goes on top of the pile; one already showing stays where it is and what is over it fades away
+    LAYERS.forEach((c) => { c.rising = c === e || (c.z < e.z && c.rising && c.p >= 0.3); });      // 0.3 of the way through the fade is about half strength
+    if (e.layer.play && !REDUCED && !allOpen && !q.has('bare')) e.layer.play().catch(() => {});      // its film starts at once (not behind a mock-up, which wants the top of the site held still)
+    hero.classList.toggle('on-paper', paperBehind()); paint();
+  }
+  if (atOnce) { LAYERS.forEach((c) => { c.p = c === e ? 1 : 0; c.rising = false; c.from = false; }); C.site = !e.us; e.z = ++stack; e.layer.style.zIndex = e.z; fadeBehind(0); hero.classList.toggle('on-paper', paperBehind()); }
+}
+// The sentence is on our paper unless a site is under it. With the proof sheet that is worked out as the sites move (see the card): a site growing out of its frame
+// reaches the sentence part way, and one going back into the sheet leaves it part way. Without the sheet, it is simply whoever is behind.
+const paperBehind = () => (SHEET.on ? !C.site : !behind || !!behind.us);
+// the same curve the first version's fade had (the browser's own "ease"): quick to show, slow to finish. p is how far through the fade; the answer is the strength.
+function ease(p) {
+  if (p <= 0) return 0; if (p >= 1) return 1; let t = p;
+  for (let i = 0; i < 6; i++) { const u = 1 - t, x = 0.75 * u * u * t + 0.75 * u * t * t + t * t * t, dx = 0.75 * u * u + 2.25 * t * t; t = clamp(t - (x - p) / Math.max(1e-4, dx), 0, 1); }
+  const u = 1 - t; return 0.3 * u * u * t + 3 * u * t * t + t * t * t;
+}
+function fadeBehind(dt) {
+  const still = STILL || REDUCED;
+  LAYERS.forEach((c) => {
+    const step = still ? 1 : dt / (c.rising ? c.dur : c.from ? SINK : Math.min(c.dur, 0.3));      // a site passed without ever being whole clears quickly; one going back into the sheet takes SINK seconds
+    if (c.rising) { c.p = Math.min(1, c.p + step); if (c.p >= 1) { c.rising = false; c.from = false; LAYERS.forEach((d) => { if (d !== c && d.z < c.z) { d.p = 0; d.rising = false; d.from = false; } }); } }
+    else if (c.p > 0 && c.p < 1) { c.p = Math.max(0, c.p - step); if (c.p === 0) c.from = false; }
+  });
+  // a site growing out of the sheet takes its colour in the first third of the way, while it is still near the size of its frame, then opens out at full strength
+  LAYERS.forEach((c) => { const o = c.from ? smooth(clamp(c.p * 3, 0, 1)) : ease(c.p); if (o !== c.o) { c.o = o; c.layer.style.opacity = o; } });
+}
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (intro) { const u = q.has('introat') && intro.ready ? clamp(+q.get('introat'), 0, 0.999) : clamp((now - intro.t0) / intro.dur, 0, 1), us = list.indexOf(US);      // ?introat=0.4 holds the opening part way, for checking
+                at = us - intro.turns * Math.pow(1 - u, 3.4); goal = rest = us; if (u >= 1) intro = null; }      // fast at first, then it slows onto "We are CYStudios." (2.3s, as it always was; a gentler 3.6s roll was tried: before-faster-roll.html)      // fast at first, then it slows onto "We are CYStudios."
+  else if (!drag) {
+    goal = ends(goal);                                 // the list has two ends: past the first client, or past our own name, there is nowhere to go
+    // Eased scrolling, in the manner of Lenis but tuned for a wheel of names. Your scrolling sets where the wheel should be (goal) and the wheel glides there (at).
+    // GLIDE is how quickly it catches up: it covers about 90% of the distance in a fifth of a second. A smooth-scroll library's usual setting takes about a second, which feels like film; this is brisk.
+    if (now - wheeling > 110 && !Number.isInteger(goal)) {
+      // once you stop, it settles on a whole name: a small push carries on to the next name in the direction you were going; it does not spring back
+      const d = goal - rest; goal = ends(Math.abs(d) < 0.16 ? rest : d > 0 ? Math.max(rest + 1, Math.round(goal)) : Math.min(rest - 1, Math.round(goal)));
+    }
+    at = REDUCED ? goal : at + (goal - at) * (1 - Math.exp(-dt * GLIDE));
+    if (Math.abs(goal - at) < 0.0008 && now - wheeling > 110) { at = goal; if (Number.isInteger(goal)) rest = goal; }
+  }
+  const centre = Math.round(at), R = pitch / STEP;
+  // each name in the pool is given the next free place on the wheel
+  const want = []; for (let i = centre - half - 1; i <= centre + half + 1; i++) if (entryAt(i)) want.push(i);
+  const free = pool.filter((p) => !want.includes(p.i)); let f = 0;
+  want.forEach((i) => { if (!pool.some((p) => p.i === i)) { const p = free[f++]; if (!p) return; p.i = i; p.h = 0; const e = entryAt(i); p.el.textContent = e.label; p.el.setAttribute('aria-label', e.name); } });
+  free.slice(f).forEach((p) => { p.i = null; });
+  pool.forEach((p) => {
+    if (p.i === null) { p.el.style.display = 'none'; return; }
+    const d = p.i - at, far = Math.abs(d), e = entryAt(p.i), turn = d * STEP;
+    const edge = clamp((half + 0.6 - far) / 1.7, 0, 1);                 // only nine show: the last names each way fade out as they go round the back of the wheel
+    // and they go out of focus: the name on the line is sharp, like the one person a camera is focused on, and the further round the wheel a name is, the softer it gets.
+    // Pointing at a name brings it into focus.
+    p.h += ((pointed === e ? 1 : 0) - p.h) * (REDUCED ? 1 : 1 - Math.exp(-dt * 14));      // the hover eases in and out over about a sixth of a second
+    const soft = Math.pow(clamp(far - 0.55, 0, 4), 1.3) * 0.6 * (1 - p.h);
+    p.el.style.filter = soft > 0.05 ? `blur(${soft.toFixed(2)}px)` : 'none';
+    p.el.style.display = edge <= 0 ? 'none' : '';
+    // round the drum: down and back as it turns away from you, tipping as it goes
+    const away = 1 - Math.cos(turn), small = 1 - 0.24 * away;         // further round the drum a name is a little smaller, and flatter because you see it edge on
+    p.el.style.transform = `translateY(${Math.sin(turn) * R}px) scale(${small}, ${small * Math.cos(turn)})`;
+    const faint = far < 0.5 ? 1 - far * 1.2 : 0.3 + 0.1 * Math.cos(turn);      // the front name is full strength; the rest sit at about a third, as on the reference
+    p.el.style.opacity = (faint + Math.max(0, 0.95 - faint) * p.h) * edge;
+    p.el.style.pointerEvents = edge < 0.3 ? 'none' : '';
+  });
+  // the first words: "We are" is at the front only while our own name is on the line; as the wheel leaves it either way, "This is" turns in from the same side as the next name
+  const n = list.length, off = at - list.indexOf(US), lean = clamp(loop ? off - n * Math.round(off / n) : off, -1, 1);
+  says.forEach((el, j) => {
+    const k = [0, 1, -1][j], turn = (k - lean) * STEP, far = Math.abs(k - lean), small = 1 - 0.24 * (1 - Math.cos(turn));
+    el.style.transform = `translateY(${Math.sin(turn) * R}px) scale(${small}, ${small * Math.cos(turn)})`;
+    el.style.opacity = clamp(1 - far * 1.3, 0, 1);
+  });
+  // the full stop follows the end of whichever name is on the line, gliding as the wheel turns
+  const i0 = Math.floor(at), fr = smooth(at - i0), a = entryAt(i0) || entryAt(i0 + 1) || entryAt(ends(i0)), b = entryAt(i0 + 1) || a;      // pulled past an end, it holds on to the last name
+  tail.style.transform = `translateX(${rollX + widthOf(a.label) * (1 - fr) + widthOf(b.label) * fr}px)`;
+  if (!intro) {
+    // every name that crosses the line brings its site up behind it, so the sites flash by as the wheel turns
+    const e = entryAt(centre);
+    if (e && e !== shown) show(e);
+    showBehind(shown);
+  } else if (intro.ready) showBehind(entryAt(centre) || US);      // the opening roll: each client's site comes up behind as their name crosses the line (the words, the button and what is read aloud wait for the end)
+  fadeBehind(dt);
+  placeSide(dt);
+  developWall(dt);
+  stepPile(performance.now());      // our parents' photographs, piled above the wall's words
+  const cueO = opening || allOpen ? 0 : clamp(1 - Math.abs(at - list.indexOf(US)) * 1.6, 0, 1);      // the signposts: only on our own line (as the page slides to the wall they fade by place: see fadeByPlace)
+  if (Math.abs(cueO - cueShown) > 0.001) { cueShown = cueO; cues.style.opacity = strip.style.opacity = cueO.toFixed(3); strip.style.pointerEvents = cueO > 0.5 ? 'auto' : 'none'; bookBtn.tabIndex = cueO > 0.5 ? 0 : -1; }      // and the strip of the work
+  stepCard(dt, now);
+  if (opening && !intro && (behind !== US || US.p >= 1)) arrive();      // settled on our own line with our paper whole, or stopped on a client by the visitor
+  if (allOpen || flying) stepBig(dt);
+  requestAnimationFrame(frame);
+}
+
+// ---------- turning the list: the mouse wheel or trackpad, the arrow keys, a finger, or a click on a name
+addEventListener('wheel', (e) => {
+  e.preventDefault(); const px = e.deltaY * (e.deltaMode === 1 ? 34 : e.deltaMode === 2 ? innerHeight : 1);
+  if (allOpen) { B.goal = hold(B.goal + clamp(px, -160, 160) / B.h); return; }      // All Work is open: the big wheel turns by as much as you scroll, like a page
+  stopIntro(); touched(); stir();      // any scroll takes a client's site back to a card, even one that cannot turn the wheel further
+  // Scrolling runs along one track: up through the clients on the wheel, down to "We are CYStudios.", round the corner, and on sideways along the wall; back the same way.
+  // Where one part ends the next begins, so a scroll carries straight round the corner. (Before, a scroll stayed in the part it started in until you paused: before-carry-on.html.)
+  // Mid-scroll the corner holds, so our name shows for a moment as you pass and a flick back along the wall lands on it: it lets the scroll on only after DWELL ms there
+  // and HOLD pixels of scrolling, whichever comes later. (At first it was 120px and no time at all, which felt too short.) A fresh scroll from our line goes straight on.
+  const now = performance.now(), flat = Math.abs(e.deltaX) > Math.abs(e.deltaY), fresh = now - S.lastWheel > 180; S.lastWheel = now;
+  let d = flat ? e.deltaX * (e.deltaMode === 1 ? 34 : e.deltaMode === 2 ? innerWidth : 1) : px;      // down, or a trackpad swiped to the left
+  const onUs = () => !loop && goal >= LAST() - 0.001;                  // our name is on the line, or the wheel is settling on it
+  if (S.goal > 0) S.hold = HOLD; else if (!onUs()) S.hold = 0; else if (fresh || flat) { S.hold = d > 0 ? HOLD : 0; S.in = -1e9; }
+  if (d > 0) {                                                         // down: the wheel, the corner, the wall
+    if (S.goal === 0 && !onUs()) { if (flat) return; d = turnBy(d); }   // a sideways swipe does not turn the wheel
+    if (d > 0 && S.goal === 0) { if (S.hold === 0) S.in = now; const t = Math.min(d, HOLD - S.hold); S.hold += t; d -= t; if (now - S.in < DWELL) d = 0; }
+    if (d > 0) { if (flat && F.goal === 0) S.goal = clamp(S.goal + d, 0, S.max); else setTrack(S.goal + F.goal + d); }      // on along the wall, and at its end down into the footer (a sideways swipe stops at the wall's end)
+  } else if (d < 0) {                                                  // up: the wall, the corner, the wheel
+    if (S.goal > 0) { const was = S.goal + F.goal; setTrack(Math.max(0, was + d)); d -= S.goal + F.goal - was; }      // back up out of the footer first, then back along the wall
+    if (d < 0 && onUs()) { if (S.hold === HOLD) S.in = now; const t = Math.min(-d, S.hold); S.hold -= t; d += t; if (now - S.in < DWELL) d = 0; }
+    if (d < 0 && !flat) turnBy(d);
+  }
+}, { passive: false });
+// Turns the wheel by d pixels of scrolling (one notch of a mouse wheel is about one name; scrolling up brings the clients down onto the line).
+// Gives back what is left over past our name at the bottom, to go on round the corner.
+function turnBy(d) {
+  const per = pitch * 3.6, to = goal + clamp(d, -120, 120) / per;
+  wheeling = performance.now(); pointed = null;
+  if (!loop && to > LAST()) { goal = LAST(); return (to - LAST()) * per; }
+  goal = ends(to); return 0;
+}
+hero.addEventListener('pointerdown', (e) => {
+  if (e.pointerType === 'mouse' && e.button) return; stopIntro(); stir();
+  if (S.goal > 0.5) { S.dragged = false; startSide(e, null, S.cur + F.cur); return; }      // the wall is in: a drag moves it, not the wheel
+  drag = { x: e.clientX, y: e.clientY, at, moved: false, id: e.pointerId, v: 0, t: performance.now() };
+});
+addEventListener('pointermove', (e) => {
+  if (!drag || e.pointerId !== drag.id) return;
+  if (e.pointerType === 'mouse' && !e.buttons) { drag = null; return; }      // a mouse moving with no button held is not dragging (in case the release was missed, say outside the window)
+  const dy = e.clientY - drag.y, dx = e.clientX - drag.x;
+  if (!drag.moved && Math.max(Math.abs(dx), Math.abs(dy)) > 6 && drag.at >= LAST() - 0.02 && (Math.abs(dx) > Math.abs(dy) ? dx < 0 : dy < 0)) {
+    S.drag = { id: drag.id, x: drag.x, y: drag.y, s0: 0, axis: Math.abs(dx) > Math.abs(dy) ? 'x' : 'y', moved: true, v: 0, t: performance.now() }; S.dragged = true; drag = null; touched(); return;      // on our line, a finger pushing up or to the left takes the page sideways
+  }
+  if (Math.abs(dy) > 6) { drag.moved = true; touched(); }
+  if (drag.moved) { const now = performance.now(), want = drag.at - dy / pitch, to = loop ? want : want + (ends(want) - want) * 0.7; drag.v = drag.v * 0.5 + 0.5 * (to - at) / Math.max(4, now - drag.t) * 1000; drag.t = now; at = to; goal = at; }      // v: names per second, for the flick
+});
+addEventListener('pointerup', (e) => {
+  if (!drag || e.pointerId !== drag.id) return; const d = drag;
+  // a flick carries the wheel on a little, as a real one would: up to four names, less the slower the finger was going. A finger that stopped before lifting leaves it where it is.
+  // Pulled past an end, it springs back to it. Letting go ends the press, so the wheel no longer follows the mouse.
+  goal = ends(at + (d.moved && performance.now() - d.t < 90 ? clamp(d.v * 0.16, -4, 4) : 0)); wheeling = 0; setTimeout(() => { if (drag === d) drag = null; }, 0);
+});
+addEventListener('pointercancel', () => { drag = null; goal = at; wheeling = 0; });
+addEventListener('keydown', (e) => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  stir();
+  if (allOpen) {
+    const row = { ArrowDown: 1, ArrowUp: -1, PageDown: 2, PageUp: -2 }[e.key];
+    if (e.key === 'Escape') closeAll(); else if (row) { B.goal = hold(Math.round(B.goal) + row); e.preventDefault(); }      // the arrow keys bring the next row up under the bar
+    return;
+  }
+  const side = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: 1, ArrowUp: -1, PageDown: 2, PageUp: -2 }[e.key];      // on our line, down or right moves the page sideways; along the wall, up or left brings it back
+  if (side && (S.goal > 0 || (side > 0 && atUs()))) { stopIntro(); setTrack(S.goal + F.goal + side * innerWidth * 0.45); touched(); e.preventDefault(); return; }
+  const step = { ArrowDown: 1, ArrowUp: -1, PageDown: 3, PageUp: -3 }[e.key];
+  if (step) { stopIntro(); goal = ends(Math.round(goal) + step); touched(); e.preventDefault(); } else if (e.key === 'Enter' && document.activeElement === document.body) open(shown);
+});
+addEventListener('resize', () => {
+  layout(); if (allOpen) { layoutBig(); setWorks(); }
+  if (isTall() === TALL) return;
+  // the window changed shape (a phone or tablet was turned, or a desktop window made narrow): change every film for the one made for the new shape
+  TALL = isTall();
+  CLIENTS.forEach((c) => { const v = c.layer; if (!v.play) return; const going = !v.paused; v.poster = poster(c); v.preload = 'metadata'; v.src = film(c); if (going) v.play().catch(() => {}); });
+});
+if (how) how.textContent = COARSE ? 'Swipe up or down, or tap a name' : 'Scroll up or down, or pick a name';      // up: the names of the work, above us; down: sideways, to what we do and the wall of work
+document.getElementById('home').onclick = (e) => { e.preventDefault(); contact(); };
+// the menu's hover: each page name gets a copy that rolls in from below (for the eye only), and the logo is drawn in the words' own colour so it can turn violet (see .rw and .logo)
+document.querySelectorAll('.nav .pages a').forEach((a) => { const t = a.textContent.trim(); a.innerHTML = '<span class="rw"><span>' + t + '</span><span aria-hidden="true">' + t + '</span></span>'; });
+document.querySelectorAll('.nav img.logo').forEach((im) => { const s = document.createElement('span'); s.className = 'logo'; s.setAttribute('aria-hidden', 'true'); im.replaceWith(s); });
+
+// ---------- the same list for the keyboard and screen readers (the wheel always carries everyone: the kinds of business were taken out of the bar)
+const keys = document.getElementById('keys');
+[...CLIENTS, US].forEach((c) => {
+  const li = document.createElement('li'), b = document.createElement('button'); b.type = 'button'; b.textContent = c.us ? 'CYStudios: about us' : `${c.name}: ${c.sub}. Show their site.`;
+  b.onclick = () => { stopIntro(); goal = nearest(list.indexOf(c)); touched(); }; li.append(b); keys.append(li);
+});
+
+// ---------- sideways: scroll down from our own line and the page moves to the right, to what we do and then the work on the gallery wall (see .wall in the styles).
+// S.cur is how far along it is, in pixels (0: our line; the window's width: the wall text fills the window; S.max: the last picture), and S.goal where it is heading.
+// A scroll belongs to one place until you pause: one that starts on our line going down, or anywhere along the wall, moves the wall; at the start it stops rather than
+// spilling on into the wheel, and the next scroll up turns the wheel again.
+const wall = document.getElementById('wall'), foot = document.querySelector('.foot'), intro2 = document.getElementById('intro');
+let away = 1;      // 1 on our page, 0 once it has slid aside for the wall
+const S = { cur: 0, goal: 0, drawn: -1, max: 0, drag: null, hold: 0, in: -1e9, lastWheel: 0, dragged: false, tall: null }, HOLD = 240, DWELL = 600;
+// The footer (2026-11-25): where the wall ends, the page stops going sideways and goes down, and the footer comes up from the foot of the window. F is how far it has come up.
+// The wall and the footer are one track: S runs from 0 to S.max along the wall, then F from 0 to F.max down into the footer. setTrack puts a place on that track into the two.
+const F = { cur: 0, goal: 0, max: 0, drawn: -1 };
+const setTrack = (t) => { S.goal = clamp(t, 0, S.max); F.goal = clamp(t - S.max, 0, F.max); };
+const atUs = () => !loop && !allOpen && Math.abs(at - LAST()) < 0.05 && goal >= LAST() - 0.001;
+// The work: each business's site on a computer (the phone pictures came out on 2026-11-24, at the user's request; with them: before-desktop-only-work.html).
+// Two to a column, in alphabetical order down each column and on to the next, in two level rows (the reference's staggered columns were dropped on 2026-11-25).
+// Every picture is the same size, so no business is bigger than another. Its name shows under it when you point at it.
+const arts = [...CLIENTS, null].map((c) => {      // null: the last one, still to come
+  const a = document.createElement('a'); a.className = 'art' + (c ? '' : ' empty'); a.draggable = false;
+  if (c) { a.href = c.url; a.target = '_blank'; a.rel = 'noopener'; a.setAttribute('aria-label', `${c.name}, ${c.sub}: visit their site (opens in a new tab)`); }
+  else { a.href = 'contact.html'; a.setAttribute('aria-label', 'Your story, next on the wall: contact us'); }
+  a.innerHTML = `<span class="shot">${c ? `<img alt="" decoding="async" loading="lazy" draggable="false" src="${c.still}">` : '<span class="canvas"></span>'}</span>`
+              + `<span class="cap"><b>${c ? c.name : 'Your story'}</b><i>${c ? c.sub : 'Next on the wall. Contact us'}</i></span>`;
+  a.c = c; wall.append(a); return a;
+});
+function layoutWall() {
+  const W = innerWidth, H = innerHeight, phone = W <= 640, side = W > 900, edge = phone ? 16 : side ? 140 : 56;      // the wall text starts clear of the words down the left side
+  const topR = 64, botR = phone ? 80 : side ? 64 : 96;      // room for the line at the top and our words at the foot
+  // the spacing of the reference: the gap between columns is the gap between pictures, about a quarter of a column. A column is about a quarter of the window,
+  // but never so wide that a high and a low column together (two pictures and their names each, and half of that again) would not fit between the line and the words
+  const fit = (gap) => Math.floor((H - topR - botR - 2.5 * gap) / (2.5 * 0.625));
+  const cw = phone ? Math.min(Math.round(W * 0.72), fit(60)) : clamp(Math.min(Math.round(W * 0.26), Math.floor((H - topR - botR) / (2.5 * (0.625 + 0.26)))), 180, 420);
+  const g = phone ? 60 : 2 * Math.round(cw * 0.13), h = Math.round(cw * 0.625), cell = h + g;      // a picture (16:10) and the room for its name under it
+  // Two even rows (2026-11-25, the user: "not a fan of the up down up down format"; every other column half a picture lower before: before-even-rows.html).
+  // Every column stands level, and the two rows' pictures stand the same distance either side of the window's middle: the gap between them is the room for the top row's names.
+  const middle = Math.round(H / 2), row0 = middle - Math.round(g / 2) - h, row1 = middle + Math.round(g / 2);
+  // Our words have a frame of their own (2026-11-25, the user: "when it is the center of the viewport nothing should also be in the same frame. So the works should come in
+  // after"; the work started 28px after them before: before-intro-alone.html). The words run in a wide measure, about half the window (460 to 760px; a phone's whole width
+  // less 24px each side), and when the wall has come all the way in they stand in the very middle of the window, with nothing else in view.
+  // The first column starts far enough on that, with the words in the middle, it is still past the right edge, and with it in the middle the words are past the left one;
+  // so as you go on, the words leave and the work comes in after them, never the two together. APART is a margin more, so neither shows at the other's edge.
+  // The measure is the narrower one again (2026-11-25, the user: "go back to being shorter in width"; about half the window, 460 to 760px, before: before-narrow-centre.html):
+  // what the words had before they widened, 46% of the window less the room either side, never more than 30em (540px); a phone's width less 40px each side.
+  const TW = phone ? W - 80 : Math.min(540, clamp(Math.round(W * 0.46), 420, 680) - edge - 40), APART = 28, step = cw + g;
+  // The words' middle line is the middle of the text you see, not of its box (2026-11-25, the user asked whether the pin and "Keep going" were centred on the text: the box
+  // was, but the lines stop short of its right edge, so the text sat a few pixels left of them: before-true-centre.html). The box is laid out first, to see how wide the
+  // text really runs (its longest line); then it is moved so that width stands in the middle of the first window's width, clear of the words down the side.
+  const left0 = Math.max(edge, Math.round((W - TW) / 2));
+  intro2.style.width = `${left0 + TW}px`; intro2.style.paddingLeft = `${left0}px`; intro2.style.paddingRight = '0px';
+  const span = document.createRange(); span.selectNodeContents(intro2.querySelector('.lede'));
+  const rows = [...span.getClientRects()].filter((r) => r.width > 1), ink = rows.length ? Math.ceil(Math.max(...rows.map((r) => r.right)) - Math.min(...rows.map((r) => r.left))) : TW;
+  const left = Math.max(edge, Math.round((W - ink) / 2)), mid = left + ink / 2;
+  const P = Math.round(mid + W / 2 + Math.max(TW, cw) / 2 + APART - cw / 2);      // the first column's left edge
+  intro2.style.width = `${left + TW}px`; intro2.style.paddingLeft = `${left}px`;
+  const on = document.getElementById('toWork'); on.style.left = `${left}px`; on.style.width = `${ink}px`;      // "Keep going" at the foot, centred on the text's middle line (12px, the signposts' size)
+  placeMemories(W, H, left, ink);
+  arts.forEach((a, k) => {
+    const col = Math.floor(k / 2), row = k % 2;
+    a._x = P + col * step; a._w = cw;
+    a.style.left = `${a._x}px`; a.style.top = `${row ? row1 : row0}px`; a.style.width = `${cw}px`;
+    a.children[0].style.height = `${h}px`; a.children[1].style.height = `${g}px`; a._h = h;
+  });
+  const cols = Math.ceil(arts.length / 2), T = P + (cols - 1) * step + cw + (phone ? 24 : 120);
+  wall.style.width = `${T}px`; wall.style.backgroundPosition = `${-W}px 0`;      // the paper's grain runs on unbroken from our own page
+  S.max = T; S.goal = clamp(S.goal, 0, S.max); S.cur = clamp(S.cur, 0, S.max); S.drawn = -1;
+  layoutFooter();
+  printWall();      // each picture's proof, at its new size
+}
+// The pinned stack: the prints hang from the pin, their tops level, the tallest one's foot 28px above the words. Each covers the same area, U by U (a tall one narrower,
+// a wide one lower), and U is made small enough for the tallest, and the pin's head above it, to stand between the words and the top of the window.
+// The pin goes in a little below the prints' top edge, on the words' middle line; every print is turned about that point.
+function placeMemories(W, H, left, TW) {
+  intro2.style.paddingTop = '';      // the words alone stand in the middle of the window, the stack above them
+  const lede = intro2.querySelector('.lede'), wb = wall.getBoundingClientRect(), top = lede.getBoundingClientRect().top - wb.top;
+  memories.style.width = `${W}px`;
+  const tallest = 1 / Math.sqrt(Math.min(...memPics.map((im) => +im.dataset.shape)));      // the tallest print's height, in U
+  const U = Math.max(64, Math.min(clamp(Math.round(W * 0.12), 96, 210), Math.floor((top - 28 - 84) / tallest)));
+  MEM.pinY = Math.round(clamp(U * 0.09, 9, 16));
+  MEM.anchor = { x: left + TW / 2, y: Math.round(top - 28 - U * tallest) };
+  // The pin's ball stands on the middle line (it is what you see); its needle leans, so its point goes into the prints a little to the left of the ball (11 of the
+  // drawing's 44 units), and the prints turn about that point. (The point was on the middle line before, which put the ball about 8px to the right: before-true-centre.html.)
+  const pw = clamp(U * 0.2, 20, 34), k = pw / 44; MEM.pinDx = -11 * k;
+  memPics.forEach((im, i) => { const sh = +im.dataset.shape; im._w = Math.sqrt(U * U * sh); im._h = Math.sqrt(U * U / sh); im._a = MEM.turns[i % MEM.turns.length]; seat(im); });
+  restack();
+  // the pin: its ball's middle (25 across its 44 by 48 drawing) on the middle line; its point (14, 40) at the pin's height on the prints
+  Object.assign(pin.style, { width: `${pw.toFixed(1)}px`, height: `${(48 * k).toFixed(1)}px`, left: `${(MEM.anchor.x - 25 * k).toFixed(1)}px`, top: `${(MEM.anchor.y + MEM.pinY - 40 * k).toFixed(1)}px`, transformOrigin: `${(14 * k).toFixed(1)}px ${(40 * k).toFixed(1)}px` });
+}
+function seat(im) {      // where a print hangs: centred on the pin, its top a little above it, turned about the pin by its own angle
+  const a = MEM.anchor; if (!a || !im._w) return;
+  Object.assign(im.style, { left: `${Math.round(a.x - im._w / 2)}px`, top: `${a.y}px`, width: `${Math.round(im._w)}px`, height: `${Math.round(im._h)}px`, transformOrigin: `calc(50% + ${(MEM.pinDx || 0).toFixed(1)}px) ${MEM.pinY}px`, rotate: `${im._a}deg` });
+}
+const restack = () => MEM.order.forEach((i, at) => { memPics[i].style.zIndex = MEM.order.length - at; });      // the first in the order is on top
+// The top print is ripped off the pin: pulled taut against it for a moment, then torn away, turning as it falls, and gone. It comes back at the bottom of the stack,
+// slipping up into place behind the others. The pin springs back as the print leaves it.
+function ripTop() {
+  const i = MEM.order[0], im = memPics[i], a = im._a, dir = a >= 0 ? 1 : -1; MEM.busy = true;
+  const off = im.animate([
+    { rotate: `${a}deg`, translate: '0 0', opacity: 1, offset: 0, easing: 'cubic-bezier(.3, 0, .6, 1)' },
+    { rotate: `${a + dir * 1.5}deg`, translate: '0 7px', opacity: 1, offset: 0.26, easing: 'cubic-bezier(.55, 0, .9, .45)' },      // pulled taut
+    { rotate: `${a + dir * 15}deg`, translate: `${dir * 30}px ${Math.round(im._h * 0.6)}px`, opacity: 0, offset: 1 },                // torn off, and away
+  ], { duration: 680, fill: 'forwards' });
+  pin.animate([{ rotate: '0deg' }, { rotate: `${dir * 9}deg`, offset: 0.3 }, { rotate: `${dir * -4}deg`, offset: 0.62 }, { rotate: '0deg' }], { duration: 520, delay: 170, easing: 'ease-out' });
+  off.onfinish = () => {
+    MEM.order.push(MEM.order.shift()); restack(); off.cancel();      // to the bottom of the stack
+    const back = im.animate([{ opacity: 0, translate: '0 18px' }, { opacity: 1, translate: '0 0' }], { duration: 720, easing: 'cubic-bezier(.16, 1, .3, 1)' });
+    back.onfinish = () => { MEM.busy = false; };
+  };
+}
+// each frame: while the stack is on screen, the top print is ripped off every PILE_BEAT, the first PILE_FIRST after it comes into view. Off screen it waits as it is,
+// and carries on from there when it comes back. With less motion asked for, the prints simply hang there.
+function stepPile(now) {
+  if (!MEM.anchor) return;
+  const W = innerWidth, x = W - S.cur + MEM.anchor.x, half = Math.max(...memPics.map((im) => im._w || 0)) / 2, seen = S.cur > 0 && x + half > 0 && x - half < W;
+  if (!seen || REDUCED) { MEM.since = 0; return; }
+  if (!MEM.since) { MEM.since = now; MEM.last = now - PILE_BEAT + PILE_FIRST; }
+  if (!MEM.busy && now - MEM.last >= PILE_BEAT) { MEM.last = now; ripTop(); }
+}
+// the curve: where a column is across the window decides how it is turned. In the middle it faces you; toward either edge it turns away, is a little smaller,
+// goes out of focus and fades, as round the outside of a drum, the way the names turn on our wheel. off is where the wall's left edge is on screen.
+function curveWall(off) {
+  const W = innerWidth;
+  arts.forEach((a) => {
+    const x = off + a._x + a._w / 2; if (x < -a._w * 2 || x > W + a._w * 2) return;      // far off screen: nothing to draw
+    const u = (x - W / 2) / (W / 2), au = Math.abs(u), s = 1 - 0.1 * Math.min(au * au, 1.6);
+    a.style.transform = `perspective(${Math.round(W * 0.95)}px) rotateY(${(clamp(u, -1.5, 1.5) * 22).toFixed(2)}deg) scale(${s.toFixed(3)})`;
+    const soft = clamp((au - 0.5) * 3.2, 0, 3); a.style.filter = soft > 0.05 ? `blur(${soft.toFixed(2)}px)` : 'none';
+    a.style.opacity = (1 - clamp((au - 0.55) * 0.7, 0, 0.5)).toFixed(3);
+  });
+}
+// Our page fades by place as it slides to the left (2026-11-25, the user: "it shouldn't all fade at once, but the closer it gets to the left it should fade"; all of it
+// together before: before-fade-by-place.html). Each part keeps its full strength until it reaches the left 45% of the window, grows fainter the further left it goes, and
+// is gone by the words standing down the left side (the window's edge on a narrower window). It is a mask fixed to the window while the page slides under it, laid over
+// the sentence and the wheel, the signposts, the strip and what we do under it, and the line at the foot (not over the paper, which the wall's own paper meets).
+const lineFade = document.getElementById('lineFade');
+function fadeByPlace(x) {
+  const W = innerWidth, H = innerHeight, gone = W > 900 ? Math.round(nav.getBoundingClientRect().right + 8) : 0, full = Math.round(W * 0.45);
+  const grad = `linear-gradient(90deg, transparent ${gone + x}px, #000 ${full + x}px)`;      // in the page's own terms, so it stays put on the window as the page moves by x
+  [lineFade, cues, strip, foot].forEach((el) => {
+    if (x <= 0) { el.style.webkitMask = el.style.mask = ''; return; }
+    const ox = el === cues || el === lineFade ? 0 : el.offsetLeft, oy = el === cues || el === lineFade ? 0 : el.offsetTop, m = `${grad} ${-ox}px ${-oy}px / ${W}px ${H}px no-repeat`;      // laid from the page's corner, whatever box it is on
+    el.style.webkitMask = m; el.style.mask = m;
+  });
+}
+// ---------- the footer's own workings
+const footer = document.getElementById('footer'), fWord = document.getElementById('fWord'), WORD = { letters: [], u: [], depth: 0, k: -1 };
+[...'CYStudios', '.'].forEach((ch) => { const el = document.createElement('span'); if (ch === '.') el.innerHTML = '<b>.</b>'; else el.textContent = ch; fWord.append(el); WORD.letters.push(el); });
+// its size: our name is set as wide as the footer's own width; then where each letter stands across it (u: -1 at the left end, 0 in the middle, 1 at the right end)
+function layoutFooter() {
+  const cs = getComputedStyle(footer), inner = footer.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  fWord.style.setProperty('--f-size', '100px'); WORD.letters.forEach((el) => { el.style.transform = ''; });
+  const natural = WORD.letters.reduce((a, el) => a + el.getBoundingClientRect().width, 0), size = 2 * Math.floor(50 * inner / natural);      // the largest even size that fits (the 2/4 grid, 2026-11-25; exactly the width before: before-grid.html)
+  fWord.style.setProperty('--f-size', `${size}px`); fWord.style.setProperty('--f-lh', `${2 * Math.round(size * 0.45)}px`);      // its line, nine tenths of the size, to the even pixel
+  const wb = fWord.getBoundingClientRect(), mid = (wb.left + wb.right) / 2, half = WORD.letters.reduce((a, el) => a + el.getBoundingClientRect().width, 0) / 2;
+  WORD.u = WORD.letters.map((el) => { const b = el.getBoundingClientRect(); return clamp(((b.left + b.right) / 2 - mid) / half, -1, 1); });
+  WORD.depth = size * 0.5; WORD.k = -1;      // how far the ends drop at their most: half the height of the letters
+  F.max = Math.min(footer.offsetHeight, innerHeight); F.goal = clamp(F.goal, 0, F.max); F.cur = clamp(F.cur, 0, F.max); F.drawn = -1;
+  footer.style.backgroundPosition = `${-S.max}px ${-innerHeight}px`;      // the paper's grain runs on from the wall's
+}
+// Our name bends as the footer comes up: p is how far up it is (0 to 1). At first its ends curve right down, each letter dropped and turned along the curve, as round the top
+// of a wheel; by three quarters of the way it is straight. With less motion asked for, it is simply straight.
+function bendWord(p) {
+  const k = REDUCED ? 0 : 1 - smooth(clamp(p / 0.75, 0, 1)); if (Math.abs(k - WORD.k) < 0.002) return; WORD.k = k;
+  WORD.letters.forEach((el, i) => { const u = WORD.u[i] || 0; el.style.transform = k < 0.002 ? '' : `translateY(${(k * WORD.depth * u * u).toFixed(1)}px) rotate(${(k * 18 * u).toFixed(2)}deg)`; });
+}
+document.getElementById('fTop').onclick = () => contact();      // back to "We are CYStudios."
+document.getElementById('fWork').onclick = (e) => { e.preventDefault(); toWall(); };
+// The wall fades by place too (2026-11-25, the user: the fading by place "should apply to everything"): its words, the pile of photographs, "Keep going" and every picture
+// grow fainter as they near the left, and are gone by the words standing down the side. Its fade is nearer the edge than our own page's (a fifth of the window, and never
+// reaching the wall's words where they stand in the middle of their frame), so nothing is touched until it is on its way out.
+function fadeWall(off) {
+  const W = innerWidth, gone = W > 900 ? Math.round(nav.getBoundingClientRect().right + 8) : 0, wordsLeft = parseFloat(intro2.style.paddingLeft) || W;
+  const full = Math.max(gone + 16, Math.min(gone + Math.round(W * 0.2), wordsLeft - 8));
+  const set = (el, x0, w) => {      // x0: where its own left edge is on the window
+    if (x0 >= full || x0 + w <= 0) { if (el._masked) { el.style.webkitMask = el.style.mask = ''; el._masked = false; } return; }      // clear of the fade, or gone past the edge
+    const m = `linear-gradient(90deg, transparent ${gone - x0}px, #000 ${full - x0}px)`; el.style.webkitMask = m; el.style.mask = m; el._masked = true;
+  };
+  set(intro2, off, intro2.offsetWidth); set(memories, off, W); arts.forEach((a) => set(a, off + a._x, a._w));
+}
+function placeSide(dt) {
+  if (!S.drag) {      // the page eases along the one track, so it never goes sideways and down at once
+    const to = S.goal + F.goal; let cur = S.cur + F.cur;
+    cur = REDUCED ? to : cur + (to - cur) * (1 - Math.exp(-dt * 9)); if (Math.abs(to - cur) < 0.3) cur = to;
+    S.cur = clamp(cur, 0, S.max); F.cur = clamp(cur - S.max, 0, F.max);
+  }
+  if (S.cur === S.drawn && F.cur === F.drawn) return;
+  // both move by whole screen pixels, so the edge where they meet never falls between two pixels; between pixels it would be drawn half see-through and the ink behind would show as a hairline
+  const W = innerWidth, dpr = window.devicePixelRatio || 1, r = Math.round(S.cur * dpr) / dpr, x = Math.min(r, W + 2), move = r > 0 ? `translate3d(${-x}px, 0, 0)` : '';
+  hero.style.transform = move; foot.style.transform = move;
+  // as our page slides away it fades by place, not all at once (see fadeByPlace), so nothing of it slides under the words standing down the left side
+  away = clamp(1 - r / (W * 0.4), 0, 1); fadeByPlace(x);
+  const fy = Math.round(F.cur * dpr) / dpr;      // how far the page has gone down: the wall rises by it, and the footer comes up from the foot of the window
+  wall.style.transform = `translate3d(${W - r}px, ${-fy}px, 0)`; wall.style.visibility = S.cur > 0 ? 'visible' : 'hidden';
+  footer.style.transform = fy > 0 ? `translate3d(0, ${-fy}px, 0)` : ''; footer.style.visibility = fy > 0 ? 'visible' : 'hidden';
+  document.documentElement.style.setProperty('--foot-rise', `${fy}px`); bendWord(F.max ? F.cur / F.max : 0);
+  if (S.cur > 0) { curveWall(W - r); fadeWall(W - r); }
+  const onWall = S.cur > W * 0.5; if (see.classList.contains('here') !== onWall) { see.classList.toggle('here', onWall); if (onWall) see.setAttribute('aria-current', 'true'); else see.removeAttribute('aria-current'); }
+  S.drawn = S.cur; F.drawn = F.cur;
+}
+// ---------- the card: while you choose, a client's site sits inset on our paper with rounded corners, dimmed, under our sentence; once you have stopped on their name for
+// a moment, our words and the dim lift and the site grows to fill the window (see .hero in the styles). C.g is how far it has grown: 0 a card, 1 the whole window.
+// It starts to grow when the wheel has been still on a client for WAIT ms and their site has fully arrived, and takes GROW seconds: our words and the dim go in the first half,
+// so they are gone before the edges reach the window. The next scroll, drag or key takes it back to a card in BACK seconds. Moving the mouse does not, or it would flicker.
+// Our own line has no card: it is bare paper, and our words sit where they always do. C.u is how much our own paper is behind (1 on our line and on All Work, 0 on a client's):
+// coming down onto a client the window draws in to a card as their site arrives, in BACK seconds, and going back to our line it opens out again. ?wait=2000 tries another pause.
+// With the proof sheet behind our line (?sheet=1) our line has a card too, as the sheet is printed in it, and C.u is 1 only on All Work.
+const WAIT = +q.get('wait') || 1200, GROW = 0.8, BACK = 0.3, SINK = 0.5, nav = document.querySelector('.nav'), veil = document.querySelector('.veil'), mark = nav.querySelector('.mark'), cta = nav.querySelector('.cta');
+const C = { g: 0, u: 1, calm: 0, box: null, tiles: null, drawn: '', site: false };
+const stir = () => { C.calm = performance.now(); };
+// The paper round the card is as wide as our edge (28px, 16 on a phone). On a wide window the card starts clear of the words down the left side, which stand on the paper beside it.
+// Corners: 24px, 16 on a phone. The proof sheet's nine frames fill the card, three by three, with the same width of paper between them as round the card,
+// down to the row at the foot (Contact, the line, a client's button; on a narrower window our words too), which keeps that same width of clean paper above it.
+function cardBox() {
+  const W = innerWidth, H = innerHeight, phone = W <= 640, side = W > 900, m = phone ? 16 : 28;
+  // gap: how far in from the card's edge the client's button sits, and the foot row with it (16px; 8 on a phone), so the button's corners can follow the card's (see the card, below)
+  C.box = { t: m, r: m, b: m, l: side ? Math.round(nav.getBoundingClientRect().right + m) : m, rad: phone ? 16 : 24, gap: phone ? 8 : 16, side, phone }; C.drawn = '';
+  const b = C.box, foot0 = foot.getBoundingClientRect().top + (C.lift || 0), bottom = foot0 - b.gap - m;      // where the foot row starts in the card (it is lifted with the card's edge)
+  const tw = (W - b.l - b.r - 2 * m) / 3, th = (bottom - b.t - 2 * m) / 3;
+  C.tiles = new Map(CLIENTS.map((c, i) => [c, { x: b.l + (i % 3) * (tw + m), y: b.t + Math.floor(i / 3) * (th + m), w: tw, h: th, rad: 0 }]));      // CLIENTS is in alphabetical order
+  printSheet();
+}
+const inOut = (v) => (v < 0.5 ? 4 * v * v * v : 1 - Math.pow(2 - 2 * v, 3) / 2);
+const mixRect = (a, b, f) => ({ x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, w: a.w + (b.w - a.w) * f, h: a.h + (b.h - a.h) * f, rad: a.rad + (b.rad - a.rad) * f });
+const holdsMiddle = (R) => !!R && R.x < innerWidth / 2 && R.x + R.w > innerWidth / 2 && R.y < innerHeight / 2 && R.y + R.h > innerHeight / 2;      // the sentence is in the middle of the window
+const px2 = (v) => `${v.toFixed(2)}px`;
+// A site shown in a rectangle R of the window: the whole window's view of it, made smaller so it covers R, centred across and from the top, as the card has always shown it.
+// Returns the layer's transform and, if `own`, the clip for its own box (which is drawn before the transform, so it is in the window's units divided by the scale).
+function showIn(R, own) {
+  const W = innerWidth, H = innerHeight;
+  if (R.x < 0.01 && R.y < 0.01 && Math.abs(R.w - W) < 0.01 && Math.abs(R.h - H) < 0.01) return { tf: '', clip: '' };      // the whole window: nothing to do
+  const s = Math.max(R.w / W, R.h / H), tx = R.x + (R.w - W * s) / 2, ty = R.y, tf = `translate(${px2(tx)}, ${px2(ty)}) scale(${s.toFixed(5)})`;
+  if (!own) return { tf, clip: '' };
+  const L = (R.x - tx) / s, T = (R.y - ty) / s;
+  return { tf, clip: `inset(${px2(T)} ${px2(W - L - R.w / s)} ${px2(H - T - R.h / s)} ${px2(L)} round ${px2(R.rad / s)})` };
+}
+function stepCard(dt, now) {
+  if (!C.box) cardBox();
+  const still = !intro && !drag && !S.drag && !allOpen && !flying && shown && !shown.us && behind === shown && shown.p >= 1
+    && at === goal && Number.isInteger(goal) && now - wheeling > 110 && S.cur === 0 && S.goal === 0;
+  if (!still) C.calm = now;
+  const grow = still && now - C.calm >= WAIT, ours = allOpen || !behind || (!!behind.us && !SHEET.on) || !!intro;      // no card while the opening roll runs: each site fills the window
+  C.g = STILL ? +grow : clamp(C.g + (grow ? dt / GROW : -dt / BACK), 0, 1);
+  C.u = STILL || REDUCED ? +ours : clamp(C.u + (ours ? dt : -dt) / BACK, 0, 1);
+  if (q.has('grown')) C.g = clamp(+q.get('grown'), 0, 1);      // for checking: ?grown=0.5 holds the card half grown (with ?at= for a client)
+  if (MID !== null && behind && !behind.us) { behind.from = true; behind.p = MID; behind.rising = false; US.p = 1; US.layer.style.opacity = 1; US.layer.style.zIndex = -1; behind.o = smooth(clamp(MID * 3, 0, 1)); behind.layer.style.opacity = behind.o; }      // for checking: ?mid=0.4 holds a site part way out of the sheet
+  // k is how much of the paper margin shows: all of it on a card, none once a client's site has grown, and none on All Work
+  const g = C.g, e = REDUCED ? +(g >= 1) : inOut(g), k = (1 - e) * (1 - smooth(C.u)), words = 1 - smooth(clamp(g * 2, 0, 1)), b = C.box;      // with less motion asked for, the words fade and the card simply changes size
+  const t = b.t * k, r = b.r * k, bt = b.b * k, l = b.l * k, o = words;      // (sliding to the wall, our page fades by place instead: see fadeByPlace)
+  const rising = CLIENTS.filter((c) => c.from && c.p > 0 && c.p < 1);      // sites on their way out of the sheet, or back into it
+  const key = `${k.toFixed(4)} ${words.toFixed(3)} ${away.toFixed(3)} ${g < 0.3} ${rising.map((c) => c.file + c.p.toFixed(4)).join()} ${behind && behind.file}`;
+  if (key === C.drawn) return; C.drawn = key;
+  const W = innerWidth, H = innerHeight, on = k > 0.0005, card = { x: l, y: t, w: W - l - r, h: H - t - bt, rad: b.rad * k };
+  const clip = on ? `inset(${px2(t)} ${px2(r)} ${px2(bt)} ${px2(l)} round ${px2(b.rad * k)})` : '';
+  veil.style.setProperty('--dim', words.toFixed(3));      // each site is clipped to its own card, not the whole pile, so the sheet under them keeps its square frames
+  // in the card the site is a little smaller, so its whole width shows, top to the card's top: it grows with the card as the card grows.
+  // A site on its way out of the sheet is shown in a rectangle between its frame and the card, with corners that round as it becomes a screen.
+  const inCard = showIn(card, true);
+  CLIENTS.forEach((c) => {
+    const R = rising.includes(c) ? mixRect(C.tiles.get(c), card, REDUCED ? 1 : inOut(c.p)) : null, v = R ? showIn(R, true) : inCard;
+    c.rect = R || card; c.layer.style.transform = v.tf; c.layer.style.clipPath = v.clip;
+  });
+  // the site under the sentence: the highest in the pile that is mostly there and reaches the middle of the window. Over it the sentence is paper on the dim, which covers
+  // only that site, where it is; with no site under it, the sentence is ink on our paper.
+  const site = CLIENTS.filter((c) => c.o > 0.5 && holdsMiddle(c.rect)).sort((a, z) => z.z - a.z)[0] || null, V = site && rising.includes(site) ? site.rect : null;
+  veil.style.clipPath = V ? `inset(${px2(V.y)} ${px2(W - V.x - V.w)} ${px2(H - V.y - V.h)} ${px2(V.x)} round ${px2(V.rad)})` : clip;
+  if (SHEET.on && !!site !== C.site) { C.site = !!site; hero.classList.toggle('on-paper', paperBehind()); paint(); }
+  // What sits along the top and the foot moves in with the card's edges, so every pairing stays level: the line and the client's button at the foot, level with Contact.
+  // On a wide window our logo and Contact move in with them, at the two ends of the words down the side (which stay on the paper beside the card); on a narrower window
+  // all our words along the foot move up. The sentence and the wheel do not move. On a phone the line starts from the left, so it moves in as the button does from the right.
+  // The button's corners follow the card's (2026-11-25, the user: "the rounded corner on the outside and subtract padding"): it sits b.gap in from the card's edge (16px; 8 on a phone)
+  // and its radius is the card's less that gap (24 - 16 = 8; on a phone 16 - 8 = 8), so the two curves are concentric. As the card grows into the window its corners square,
+  // and the button's with them. (28px in and square before: before-round-button.html.)
+  const G = b.gap * k, apart = b.r * (1 - k) + G, round = Math.max(0, b.rad * k - apart);      // apart: how far the button is from the card's edge just now
+  const dn = on ? `0 ${px2(G)}` : '', up = on ? `0 ${px2(-G)}` : ''; C.lift = G;
+  foot.style.translate = on && b.phone ? `${px2(G)} ${px2(-G)}` : up; go.style.translate = on ? `${px2(-G)} ${px2(-G)}` : ''; go.style.borderRadius = round > 0.05 ? px2(round) : '';
+  nav.style.translate = b.side ? '' : up; mark.style.translate = b.side ? dn : '';      // (Contact stood at the foot and moved up with the card's edge, before it went under About)
+  line.style.opacity = o < 1 ? o.toFixed(3) : ''; foot.style.opacity = o < 1 ? o.toFixed(3) : '';
+  line.style.pointerEvents = words < 0.5 ? 'none' : '';      // the names, once faded, cannot be clicked
+  document.body.classList.toggle('carded', g < 0.3);      // until the growing card's edge reaches the words down the side, they stand on paper
+}
+addEventListener('resize', cardBox);
+
+// ---------- the print: a site printed in our dots on the hanji, the way a printer pulls a proof of every page before the colour run.
+// It is used on the wall of work (each picture is its site's proof until it comes into view, then it develops into the site: see "the wall in print", below),
+// and, with ?sheet=1, behind our own line as the proof sheet (2026-11-25, all nine in a 3×3 grid; moved to the wall the same day at the user's request: before-wall-print.html).
+// The screen is the one from the first loading screen and the All Work grid: round dots on a 45 degree lattice CELL px apart, swelling where the picture is darker.
+// On a phone the pictures are smaller, so the screen is finer there (3px), and each keeps about as much of its site.
+// INK is how much of the paper the darkest part covers (0.42), so the darkest sites stay a mid violet. FLOOR is the faint tint even white is printed with, as a proof is,
+// so every picture shows as a picture: a white site would otherwise vanish into the paper. ?sheetcell=, ?sheetink= and ?floor= try others.
+const MID = q.has('mid') ? clamp(+q.get('mid'), 0, 1) : null;
+const SHEET = { on: q.get('sheet') === '1', cell: +q.get('sheetcell') || 4.2, phoneCell: +q.get('sheetcell') || 3, ink: +q.get('sheetink') || 0.42, floor: q.has('floor') ? +q.get('floor') : 0.035, key: '', pics: new Map() };
+const sheet = document.createElement('canvas'); sheet.className = 'sheet'; sheet.setAttribute('aria-hidden', 'true'); if (SHEET.on) { US.layer.append(sheet); document.body.classList.add('sheet-on'); }
+function pic(src) {      // the stills, loaded once for printing (the films use the same ones as their first frame)
+  if (!SHEET.pics.has(src)) { const im = new Image(); im.decoding = 'async'; im.onload = () => { printSheet(); printWall(); printStrip(); }; im.src = src; SHEET.pics.set(src, im); }
+  return SHEET.pics.get(src);
+}
+// the part of a picture that a box w by h shows when the picture covers it, centred across and from the top (object-fit: cover; object-position: top)
+const cover = (pw, ph, w, h) => { const s = Math.max(w / pw, h / ph); return { x: (pw - w / s) / 2, y: 0, w: w / s, h: h / s }; };
+const inkColour = () => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#5F48DA';      // our violet
+const probe = document.createElement('canvas'), pc = probe.getContext('2d', { willReadFrequently: true });
+// Prints the part src {x, y, w, h} of picture im into the rectangle R of the 2D context x, in our dots. The lattice runs on from the context's own corner.
+function halftone(x, im, src, R, cell) {
+  const d = cell / Math.SQRT2;      // rows d apart, dots 2d apart along a row, every other row moved along by d
+  const cols = Math.max(1, Math.round(R.w / d)), rows = Math.max(1, Math.round(R.h / d));      // one sample for each d by d of the rectangle
+  probe.width = cols; probe.height = rows; pc.imageSmoothingEnabled = true; pc.imageSmoothingQuality = 'high';
+  pc.drawImage(im, src.x, src.y, src.w, src.h, 0, 0, cols, rows);
+  const px = pc.getImageData(0, 0, cols, rows).data;
+  x.save(); x.beginPath(); x.rect(R.x, R.y, R.w, R.h); x.clip(); x.beginPath();      // a clean edge, where the site's colour will land
+  for (let j = Math.floor(R.y / d); j * d < R.y + R.h + d; j++) {
+    const y = j * d, odd = j & 1, v = clamp(Math.floor((y - R.y) / d), 0, rows - 1);
+    for (let n = Math.floor((R.x / d - odd) / 2); (2 * n + odd) * d < R.x + R.w + d; n++) {
+      const X = (2 * n + odd) * d, u = clamp(Math.floor((X - R.x) / d), 0, cols - 1), at4 = (v * cols + u) * 4;
+      const lum = (0.2126 * px[at4] + 0.7152 * px[at4 + 1] + 0.0722 * px[at4 + 2]) / 255, rad = cell * Math.sqrt((SHEET.floor + SHEET.ink * (1 - lum)) / Math.PI);
+      if (rad < 0.3) continue;      // paper: no dot
+      x.moveTo(X + rad, y); x.arc(X, y, rad, 0, Math.PI * 2);
+    }
+  }
+  x.fill(); x.restore();
+}
+// the proof sheet behind our own line (?sheet=1): each frame shows a site exactly as its card does (the window's view of it, made smaller), so its colour lands on its own print
+function printSheet() {
+  if (!SHEET.on || !C.tiles) return;
+  const W = innerWidth, H = innerHeight, dpr = Math.min(2, window.devicePixelRatio || 1), ims = CLIENTS.map((c) => pic(poster(c)));
+  const key = [W, H, dpr, TALL, ims.map((im) => +(im.complete && im.naturalWidth > 0)).join('')].join();
+  if (key === SHEET.key) return; SHEET.key = key;
+  const cw = Math.round(W * dpr), ch = Math.round(H * dpr); if (sheet.width !== cw || sheet.height !== ch) { sheet.width = cw; sheet.height = ch; }
+  const x = sheet.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, W, H); x.fillStyle = inkColour();
+  const cell = W <= 640 ? SHEET.phoneCell : SHEET.cell;
+  CLIENTS.forEach((c, i) => {
+    const im = ims[i]; if (!im.complete || !im.naturalWidth) return;
+    const R = C.tiles.get(c), A = cover(im.naturalWidth, im.naturalHeight, W, H), Lv = cover(W, H, R.w, R.h);      // the window's view of the site, then the frame's view of that
+    halftone(x, im, { x: A.x + Lv.x * A.w / W, y: A.y + Lv.y * A.h / H, w: Lv.w * A.w / W, h: Lv.h * A.h / H }, R, cell);
+  });
+}
+
+// ---------- the wall in print (2026-11-25, the user's idea: "it initially looks like this until we bring it to viewport and slowly it becomes the actual sites").
+// Each picture on the wall starts as its site's proof, printed in our dots. Once it has come into view (its middle inside the window, short of the right-hand edge it arrives from)
+// it develops into the site: the colour comes down over the print from the top, the way a page loads, with a soft edge, over DEV seconds. It stays in colour while you are on the wall;
+// back on our own line the wall is printed again, so the next visit develops it again. ?develop=0.5 holds every picture in view half developed, for checking.
+const DEV = +q.get('dev') || 1.8, HOLD_DEV = q.has('develop') ? clamp(+q.get('develop'), 0, 1) : null;
+arts.forEach((a) => {
+  if (!a.c) return;
+  const cv = document.createElement('canvas'); cv.className = 'print'; cv.setAttribute('aria-hidden', 'true');
+  a.im = a.querySelector('img'); a.im.before(cv); a.print = cv; a.v = 0; a.seen = false; a.key = ''; a.classList.add('printed'); develop(a);
+});
+function printWall() {
+  const dpr = Math.min(2, window.devicePixelRatio || 1), cell = innerWidth <= 640 ? SHEET.phoneCell : SHEET.cell, ink = inkColour();
+  arts.forEach((a) => {
+    if (!a.c || !a._w) return;
+    const im = pic(a.c.still), w = a._w, h = a._h, key = [w, h, dpr, cell, +(im.complete && im.naturalWidth > 0)].join();
+    if (key === a.key) return; a.key = key;
+    const cv = a.print; cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    const x = cv.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, w, h); x.fillStyle = ink;
+    if (im.complete && im.naturalWidth) halftone(x, im, cover(im.naturalWidth, im.naturalHeight, w, h), { x: 0, y: 0, w, h }, cell);
+  });
+}
+// how far a picture has developed: v from 0 (the print) to 1 (the site), shown as the colour's lower edge coming down over the print
+function develop(a) {
+  const im = a.im, v = a.v;
+  if (v <= 0) { im.style.opacity = '0'; im.style.maskImage = im.style.webkitMaskImage = ''; return; }
+  im.style.opacity = '';
+  if (v >= 1) { im.style.maskImage = im.style.webkitMaskImage = ''; return; }
+  const e = inOut(v), m = `linear-gradient(to bottom, #000 ${(e * 135 - 35).toFixed(2)}%, transparent ${(e * 135).toFixed(2)}%)`;      // the soft edge is about a third of the picture
+  im.style.maskImage = m; im.style.webkitMaskImage = m;
+}
+function developWall(dt) {
+  const W = innerWidth, off = W - S.cur, onWall = S.cur > 0;
+  arts.forEach((a) => {
+    if (!a.c) return;
+    if (!onWall) { if (a.v > 0 || a.seen) { a.v = 0; a.seen = false; develop(a); } return; }      // the wall has gone: print it again for next time
+    const mid = off + a._x + a._w / 2;
+    if (!a.seen && mid > 0 && mid < W * 0.85) a.seen = true;
+    if (!a.seen || (a.v >= 1 && HOLD_DEV === null)) return;
+    a.v = HOLD_DEV !== null ? HOLD_DEV : STILL || REDUCED ? 1 : Math.min(1, a.v + dt / DEV);      // with less motion asked for, it simply shows the site
+    develop(a);
+  });
+}
+
+const toward = (el) => { const W = innerWidth; S.goal = clamp(el.offsetLeft + (W + el.offsetWidth) / 2, W, S.max); F.goal = 0; };      // bring a picture to the middle of the window
+document.getElementById('toWork').onclick = () => toward(arts[0]);
+wall.addEventListener('focusin', (e) => { const a = e.target.closest('.art'); if (a) toward(a); else if (e.target.closest('.intro')) { S.goal = innerWidth; F.goal = 0; } });
+// a finger or a mouse dragging the wall: left or up moves it on, as a page would; a quick flick carries it on a little
+function startSide(e, axis, s0) { S.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, s0, axis, moved: !!axis, v: 0, t: performance.now() }; }
+wall.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse' && e.button) return; S.dragged = false; startSide(e, null, S.cur + F.cur); });
+footer.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse' && e.button) return; S.dragged = false; startSide(e, null, S.cur + F.cur); });      // a drag on the footer moves the same track
+footer.addEventListener('click', (e) => { if (S.dragged) { e.preventDefault(); e.stopPropagation(); S.dragged = false; } }, true);
+addEventListener('pointermove', (e) => {
+  const d = S.drag; if (!d || e.pointerId !== d.id) return;
+  if (e.pointerType === 'mouse' && !e.buttons) { S.drag = null; return; }      // the same for the page sideways
+  const dx = e.clientX - d.x, dy = e.clientY - d.y;
+  if (!d.axis) { if (Math.max(Math.abs(dx), Math.abs(dy)) < 6) return; d.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'; d.moved = true; S.dragged = true; }
+  const now = performance.now(), to = clamp(d.s0 - (d.axis === 'x' ? dx : dy), 0, S.max + F.max), was = S.cur + F.cur;      // a place on the one track
+  d.v = d.v * 0.5 + 0.5 * (to - was) / Math.max(4, now - d.t) * 1000; d.t = now; S.cur = S.goal = Math.min(to, S.max); F.cur = F.goal = Math.max(0, to - S.max);
+});
+const dropSide = (e) => { const d = S.drag; if (!d || (e.pointerId !== undefined && e.pointerId !== d.id)) return;
+  setTrack(S.cur + F.cur + (d.moved && performance.now() - d.t < 90 ? clamp(d.v * 0.28, -1600, 1600) : 0)); S.drag = null; };
+addEventListener('pointerup', dropSide); addEventListener('pointercancel', dropSide);
+wall.addEventListener('click', (e) => { if (S.dragged) { e.preventDefault(); e.stopPropagation(); S.dragged = false; } }, true);      // a drag that ends on a picture is not a click on it
+addEventListener('resize', layoutWall);
+
+// ---------- All Work: every client's site, two to a row, on one big wheel that fills the window.
+// It is the wheel of names seen from the inside and stretched: a long body that fills the window, with a bend at each end (the top and bottom tenth of the window).
+// At rest it lies flat, like a page. While it turns the two ends curl forward, more the faster it goes, and lie flat again when it stops, so a row arriving comes over the curl
+// and lies down. It turns by as much as you scroll and glides to a stop; the rows come round again after the last.
+// Opening it is like stepping back from one screen to the whole wall: the site that fills the window shrinks into its place. Choosing a picture does the reverse.
+const all = document.getElementById('all'), drum = document.getElementById('drum'), dotgrid = document.getElementById('dotgrid'), see = document.getElementById('see'), worksList = document.getElementById('works');
+// ENDS: how much of the window each bend takes, top and bottom (a tenth). ROLL: how tight the curl is at full speed: its radius, as a multiple of that tenth (smaller is tighter).
+// FULL: the speed, in pixels a second, at which the ends are fully curled. DEPTH: how far away you stand, in heights of the body (nearer makes the ends loom larger).
+// STRIP: about how tall each strip of a picture is, so it can bend. GLIDE_BIG: how quickly the wheel catches up with your scrolling.
+const ENDS = 0.1, ROLL = +q.get('roll') || 1.15, FULL = +q.get('full') || 1500, DEPTH = +q.get('depth') || 0.9, STRIP = 17, MAXS = 26, SLOTS = 7, GLIDE_BIG = 8.5;
+const PICS = { still: [1600, 1000], square: [900, 900], tallStill: [780, 1688] }, byFile = new Map(CLIENTS.map((c) => [c.file, c]));
+const B = { at: 0, goal: 0, drag: null, loop: true, max: 0, works: [], kind: 'still', cols: 2, last: null, dirty: true, bend: 0, lastBend: -1, ns: 20, L: 360, r: 100, P: 700, h: 300, th: 260, w: 300, sh: 16, capH: 22, pad: 18, m: 40, g: 40 };
+let allOpen = false, flying = false, hot = [];
+// seven rows are kept ready (those in view and one beyond each end); each is up to MAXS strips of two picture pieces, and one strip of two names
+const slots = Array.from({ length: SLOTS }, () => {
+  const s = { i: null, key: null, strips: [], cap: null };
+  for (let k = 0; k <= MAXS; k++) {
+    const el = document.createElement('div'); el.className = k < MAXS ? 'strip' : 'strip cap'; el.style.display = 'none';
+    for (let col = 0; col < 2; col++) { const cell = document.createElement(k < MAXS ? 'div' : 'span'); cell.className = k < MAXS ? 'slice' : 'label'; el.append(cell); }
+    drum.append(el); if (k < MAXS) s.strips.push(el); else s.cap = el;
+  }
+  return s;
+});
+// The grid, printed in dots (the same screen of dots as the first loading screen: 45 degrees, round dots that swell with the tone). It is still: printed on the page, under the pictures.
+// CELL: how far apart the dots sit. LINE: how wide a grid line's soft edge is. TONE: how dark a line is at its middle (0 to 1; it sets how big the dots get there).
+// INKED: how strong the dots' ink is. ?cell= ?tone= ?inked= try others.
+const GRID = { cell: +q.get('cell') || 4.2, line: +q.get('line') || 4.6, tone: +q.get('tone') || 0.3, inked: +q.get('inked') || 0.15, xs: [0, 0, 0], nx: 3, top: 90, bottom: 810, gl: null, u: null, last: '' };
+(function printer() {
+  const gl = dotgrid.getContext('webgl2', { premultipliedAlpha: true, antialias: false }); if (!gl) return;      // without it there is simply no grid
+  const sh = (type, src) => { const x = gl.createShader(type); gl.shaderSource(x, src); gl.compileShader(x); if (!gl.getShaderParameter(x, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(x)); return x; };
+  const prog = gl.createProgram();
+  try {
+    gl.attachShader(prog, sh(gl.VERTEX_SHADER, `#version 300 es
+in vec2 a; void main() { gl_Position = vec4(a, 0., 1.); }`));
+    gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, `#version 300 es
+precision highp float;
+uniform vec2 res; uniform float dpr, cell, line, tone, inked, top, bottom; uniform vec3 xs; uniform int nx; uniform vec3 ink;
+out vec4 o;
+float soft(float d) { return exp(-d * d / (line * line)); }                      // a line's tone: darkest at its middle, fading to nothing either side
+void main() {
+  vec2 p = vec2(gl_FragCoord.x, res.y - gl_FragCoord.y) / dpr;                    // where we are on the page, in ordinary pixels from the top left
+  float t = soft(p.x - xs.x) + soft(p.x - xs.y) + (nx > 2 ? soft(p.x - xs.z) : 0.);      // the upright lines: the two margins, and the gap between the columns
+  t += soft(p.y - top) + soft(p.y - bottom);                                      // the level lines: one where each of the wheel's two ends begins
+  float H = res.y / dpr;
+  t = min(t, 1.35) * tone * smoothstep(0., top * .5, p.y) * smoothstep(H, H - (H - bottom) * .5, p.y);      // the upright lines trail off towards the top and bottom edges of the window
+  vec2 g = p / cell; g = vec2(g.x + g.y, g.y - g.x) * .70710678;                 // the screen: a 45 degree lattice of round dots that swell as the tone darkens
+  float s = .5 + .25 * (cos(6.2831853 * g.x) + cos(6.2831853 * g.y)), th = 1. - t, w = fwidth(s) * .75 + 1e-4;
+  float a = smoothstep(th - w, th + w, s) * inked * step(.004, t);
+  o = vec4(ink * a, a);
+}`));
+  } catch (err) { console.warn('The dot grid could not be drawn.', err); return; }
+  gl.linkProgram(prog); gl.useProgram(prog);
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(prog, 'a'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  GRID.gl = gl; GRID.u = Object.fromEntries(['res', 'dpr', 'cell', 'line', 'tone', 'inked', 'top', 'bottom', 'xs', 'nx', 'ink'].map((n) => [n, gl.getUniformLocation(prog, n)]));
+  gl.uniform3f(GRID.u.ink, 0x17 / 255, 0x1C / 255, 0x0C / 255);
+})();
+function printGrid() {      // print the grid again, if the window has changed (it does not change as the wheel turns)
+  const gl = GRID.gl; if (!gl) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * dpr), h = Math.round(innerHeight * dpr), key = [w, h, GRID.xs, GRID.nx, GRID.top, GRID.bottom].join();
+  if (key === GRID.last) return; GRID.last = key;
+  if (dotgrid.width !== w || dotgrid.height !== h) { dotgrid.width = w; dotgrid.height = h; gl.viewport(0, 0, w, h); }
+  const u = GRID.u; gl.uniform2f(u.res, w, h); gl.uniform1f(u.dpr, dpr); gl.uniform1f(u.cell, GRID.cell); gl.uniform1f(u.line, GRID.line); gl.uniform1f(u.tone, GRID.tone); gl.uniform1f(u.inked, GRID.inked);
+  gl.uniform1f(u.top, GRID.top); gl.uniform1f(u.bottom, GRID.bottom); gl.uniform3f(u.xs, GRID.xs[0], GRID.xs[1], GRID.xs[2]); gl.uniform1i(u.nx, GRID.nx);
+  gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+CLIENTS.forEach((c) => {      // the same works as a plain list, for the keyboard and screen readers
+  const li = document.createElement('li'), b = document.createElement('button'); b.type = 'button'; b.textContent = `${c.name}: ${c.sub}. Show their site.`;
+  b.onclick = () => closeAll(c); b.onfocus = () => { if (allOpen && B.works.includes(c)) B.goal = hold(rowOf(c)); };
+  li.append(b); worksList.append(li); c.item = li;
+});
+const onWheel = (c) => !!c && !c.us && B.works.includes(c);
+// The works go two to a row (one on a phone) in the order of the list, and after the last comes the first again. With an odd number (nine) the pairs shift by one each
+// time round, so no client is always on the left, always on the right, or left alone at the end.
+const workAt = (i, col) => { const n = B.works.length, k = B.cols * i + col; return col >= B.cols ? null : B.loop ? B.works[mod(k, n)] : (k >= 0 && k < n ? B.works[k] : null); };
+// the row a client is in: on a wheel that goes round, the nearest of its rows to where the wheel is now
+const rowOf = (c) => { const k = B.works.indexOf(c), n = B.works.length; if (!B.loop) return Math.floor(k / B.cols); const here = Math.round(B.at * B.cols / n); return [here - 1, here, here + 1].map((lap) => Math.floor((k + lap * n) / B.cols)).reduce((a, b) => (Math.abs(b - B.at) < Math.abs(a - B.at) ? b : a)); };
+// a list too short for that cannot go round without a picture showing twice, so it stops at its first and last rows
+const hold = (v) => (B.loop ? v : clamp(v, 0, B.max));
+function setWorks() {
+  B.works = list.filter((e) => !e.us); const n = B.works.length, rows = Math.ceil(n / B.cols);
+  B.loop = n >= B.cols * (Math.floor(innerHeight / B.h) + 2);                                   // enough works that the rows in the window are all different
+  B.max = Math.max(0, rows - 1 - (2 * B.L - B.pad - B.th - 6 - B.capH) / B.h);           // otherwise it stops with the last row's names at the foot of the body
+  B.at = B.goal = 0; B.dirty = true; slots.forEach((s) => { s.key = null; });
+  CLIENTS.forEach((c) => { if (c.item) c.item.hidden = !B.works.includes(c); });
+}
+// The wheel is sized from the window. Two columns fill the width with room between and beside them (one column on a phone, where two would be too small to read).
+// Every picture is the wide rectangle of the site as a desktop shows it, whatever shape the window is, and none is cut. The body runs between the two ends; each end takes
+// a tenth of the window's height (more where the bar or the buttons need it).
+function layoutBig() {
+  const W = innerWidth, H = innerHeight, phone = W <= 640;
+  const nr = document.querySelector('.nav').getBoundingClientRect(), tall = nr.height > H / 2, top = Math.max(H * ENDS, (tall ? 64 : nr.top < H / 2 ? nr.bottom : 64) + 8), bottom = H - Math.max(H * ENDS, H - Math.min(H, go.getBoundingClientRect().top, !tall && nr.top > H / 2 ? nr.top : H) + 8);      // the words may be at the top or the foot
+  const band = Math.max(160, bottom - top), mid = (top + bottom) / 2;
+  B.kind = 'still'; B.cols = phone ? 1 : 2;
+  B.m = clamp(W * 0.05, 16, 72); B.g = clamp(W * 0.039, 14, 56); B.capH = phone ? 18 : 22; B.pad = phone ? 12 : 18;
+  // rows sit far enough apart that when one rests under the bar, the one before it is wholly off the top: room to breathe, and a clean top edge.
+  // (On a phone the bar runs the full width and hides what is under it, so rows can sit closer.)
+  const between = phone ? 52 : Math.max(clamp(W * 0.045, 30, 64), top + B.pad + 4);
+  B.w = (W - 2 * B.m - (B.cols - 1) * B.g) / B.cols; B.th = B.w * PICS[B.kind][1] / PICS[B.kind][0]; B.h = B.th + 6 + B.capH + between;
+  B.ns = clamp(Math.round(B.th / STRIP), 8, MAXS); B.sh = B.th / B.ns;
+  B.L = band / 2; B.r = (top + H - bottom) / 2 * ROLL; B.P = Math.max(band * DEPTH, 640);
+  all.style.perspective = `${B.P}px`; all.style.perspectiveOrigin = `50% ${mid}px`; drum.style.top = `${mid}px`; drum.style.transform = 'none';
+  drum.style.setProperty('--m', `${B.m}px`); drum.style.setProperty('--g', `${B.g}px`); drum.style.setProperty('--cols', B.cols);
+  slots.forEach((s) => {
+    s.key = null; s.cap.style.height = `${B.capH}px`; s.cap.style.top = `${-B.capH / 2}px`;
+    s.strips.forEach((el, k) => { el.style.display = 'none'; if (k >= B.ns) return; el.style.height = `${B.sh + 2.5}px`; el.style.top = `${-B.sh / 2}px`; el.style.transformOrigin = `50% ${B.sh / 2}px`; el.firstChild.className = el.lastChild.className = `slice${k === 0 ? ' first' : ''}${k === B.ns - 1 ? ' last' : ''}`; });      // strips overlap a little so no line shows between them
+  });
+  // the grid's lines: one down the middle of each margin and one down the gap between the columns (on a phone, the two margins only); a level one where each end of the wheel begins
+  GRID.xs = [B.m / 2, W - B.m / 2, W / 2]; GRID.nx = B.cols === 1 ? 2 : 3; GRID.top = top; GRID.bottom = bottom; printGrid();
+  B.dirty = true;
+}
+// Where the wheel is, s pixels along it from the middle of the body: [down the window, towards you, how far it has turned].
+// On the body it is flat. Past either end it goes round a curl, coming forward as it turns. How tight the curl is follows B.bend (0 at rest, 1 at full speed): at rest it is flat too.
+function along(s) {
+  const a = Math.abs(s), sign = s < 0 ? -1 : 1, k = B.bend / B.r; if (a <= B.L || k < 1e-5) return [s, 0, 0];
+  const t = (a - B.L) * k; return [sign * (B.L + Math.sin(t) / k), (1 - Math.cos(t)) / k, sign * t];
+}
+function fill(s, i) {      // put row i into one of the ready rows
+  for (let col = 0; col < 2; col++) {
+    const c = workAt(i, col);
+    s.strips.forEach((el, k) => {
+      if (k >= B.ns) return; const cell = el.children[col]; cell.classList.toggle('none', !c); cell.style.display = col < B.cols ? '' : 'none'; cell.classList.remove('hot', 'away');
+      if (!c) { cell.style.backgroundImage = ''; delete cell.dataset.c; return; }
+      cell.dataset.c = c.file; cell.style.setProperty('--c', c.tint); cell.style.backgroundImage = `url("${c[B.kind]}")`; cell.style.backgroundSize = `${B.w}px ${B.th}px`; cell.style.backgroundPosition = `0 ${-k * B.sh}px`;
+    });
+    const lab = s.cap.children[col]; lab.textContent = ''; delete lab.dataset.c; lab.style.display = col < B.cols ? '' : 'none';
+    if (c) { const b = document.createElement('b'), it = document.createElement('i'); b.textContent = c.name; it.textContent = c.sub; lab.append(b, it); lab.dataset.c = c.file; }
+  }
+}
+function renderBig() {
+  const first = Math.floor(B.at) - 1, block = B.th + 6 + B.capH;      // a row is two pictures with their names under them
+  // put one strip where the wheel is at s. Strips that have gone more than a quarter turn round an end face away from you and are not drawn.
+  const put = (el, s) => { const [y, z, t] = along(s), on = Math.abs(t) < 1.5 && Math.abs(y) < innerHeight; el.style.display = on ? '' : 'none'; if (!on) return null; el.style.transform = `translate3d(0, ${y}px, ${z}px) rotateX(${t}rad)`; return [z, t]; };
+  for (let n = 0; n < SLOTS; n++) {
+    const i = first + n, s = slots[mod(i, SLOTS)], key = `${i}|${B.loop ? mod(B.cols * i, B.works.length) : i}|${B.cols}`, has = !!(workAt(i, 0) || workAt(i, 1));
+    s.i = i; if (s.key !== key) { s.key = key; fill(s, i); }
+    if (!has) { s.strips.forEach((el) => { el.style.display = 'none'; }); s.cap.style.display = 'none'; continue; }
+    const head = (i - B.at) * B.h - B.L + B.pad;      // with a whole number for B.at, that row sits just under the bar
+    s.strips.forEach((el, k) => { if (k >= B.ns) return; const at = put(el, head + (k + 0.5) * B.sh); if (!at) return; const shade = (0.5 * (1 - Math.cos(at[1]))).toFixed(3); if (el.shade !== shade) { el.shade = shade; el.style.setProperty('--sh', shade); } });      // the shade is only written when it changes: on the flat body it never does
+    const capAt = head + B.th + 6 + B.capH / 2, at = put(s.cap, capAt); if (!at) continue;
+    // Arrival: a name appears once its row has come over the bend and lies on the body, rising a little into place, the left one just before the right.
+    // Seen at an angle, upright letters lean like italics; each name is also leaned back by exactly that much, so it stands upright.
+    const near = B.P / (B.P - at[0]), inBy = B.L - B.capH / 2 - Math.abs(capAt);
+    for (let col = 0; col < 2; col++) {
+      const x = B.m + col * (B.w + B.g) + 50 - innerWidth / 2, f = clamp((inBy - col * 26 * B.bend) / 36, 0, 1), lab = s.cap.children[col];      // left before right only while the wheel is moving; at rest the two match
+      lab.style.opacity = f; lab.style.transform = `translateY(${(1 - f) * (capAt > 0 ? 10 : -10)}px) skewX(${Math.atan(-x * near * Math.sin(at[1]) / B.P)}rad)`;
+    }
+  }
+  B.last = B.at; B.lastBend = B.bend; B.dirty = false;
+}
+function stepBig(dt) {      // scrolling sets where the wheel should be and it glides there, as the small wheel does; how fast it is going sets how far its ends curl
+  const was = B.at;
+  if (!B.drag) { B.at = REDUCED ? B.goal : B.at + (B.goal - B.at) * (1 - Math.exp(-dt * GLIDE_BIG)); if (Math.abs(B.goal - B.at) < 0.0004) B.at = B.goal; }
+  const speed = dt > 0 ? Math.abs(B.at - (B.prev === undefined ? B.at : B.prev)) * B.h / dt : 0, want = REDUCED || STILL ? (BENT || 0) : Math.max(BENT || 0, clamp(speed / FULL, 0, 1));
+  B.prev = B.at; B.bend += (want - B.bend) * (1 - Math.exp(-dt * (want > B.bend ? 16 : 4.5)));      // quick to curl, slower to lie flat again
+  if (Math.abs(want - B.bend) < 0.002) B.bend = want;
+  if (B.dirty || B.at !== B.last || B.bend !== B.lastBend) renderBig();
+}
+const BENT = q.has('bent') ? +q.get('bent') || 1 : 0;      // for checking: ?bent holds the ends curled as at full speed
+// the pieces of one client's picture: the copy nearest the middle of the window, if the wheel is showing it
+function piecesOf(c) {
+  let best = null;
+  slots.forEach((s) => { if (s.i === null) return; for (let col = 0; col < B.cols; col++) { if (workAt(s.i, col) !== c) continue; const cells = s.strips.slice(0, B.ns).map((el) => el.children[col]).filter((el) => el.parentElement.style.display !== 'none'), far = Math.abs(s.i + 0.5 - B.at - (B.L - B.pad) / B.h); if (cells.length < B.ns * 0.6 || (best && far >= best.far)) continue; best = { far, cells }; } });
+  return best ? best.cells : null;
+}
+function boxOf(cells) { let l = 1e9, t = 1e9, r = -1e9, b = -1e9; cells.forEach((el) => { const q = el.getBoundingClientRect(); l = Math.min(l, q.left); t = Math.min(t, q.top); r = Math.max(r, q.right); b = Math.max(b, q.bottom); }); return { left: l, top: t, width: r - l, height: b - t }; }
+// the travelling picture. into = true: the window shrinks into its place on the wheel; false: the picture grows to fill the window
+function fly(c, cells, into) {
+  const px = (b) => ({ left: `${b.left}px`, top: `${b.top}px`, width: `${b.width}px`, height: `${b.height}px` });
+  const place = px(boxOf(cells)), full = px({ left: 0, top: 0, width: innerWidth, height: innerHeight }), opts = { duration: 560, easing: 'cubic-bezier(.3, 0, .1, 1)', fill: 'both' };
+  const f = document.createElement('div'); f.className = 'fly'; const small = new Image(); small.src = c[B.kind]; small.alt = ''; f.append(small);
+  // over the photograph the wheel shows goes the picture the window shows, and one dissolves into the other on the way.
+  // Leaving a film, that is the very frame it was showing, so nothing jumps.
+  let wide = null;
+  if (into && c.layer.videoWidth) { try { wide = document.createElement('canvas'); wide.width = c.layer.videoWidth; wide.height = c.layer.videoHeight; wide.getContext('2d').drawImage(c.layer, 0, 0); } catch (err) { wide = null; } }
+  if (!wide) { wide = new Image(); wide.src = poster(c); wide.alt = ''; }
+  f.append(wide); wide.animate(into ? [{ opacity: 1 }, { opacity: 0 }] : [{ opacity: 0 }, { opacity: 1 }], opts);
+  const veil = document.createElement('i'); f.append(veil); veil.animate(into ? [{ opacity: 1 }, { opacity: 0 }] : [{ opacity: 0 }, { opacity: 1 }], opts);      // the dark veil the sentence needs lifts as the picture becomes a plain photograph
+  document.body.append(f); cells.forEach((el) => el.classList.add('away'));
+  return f.animate(into ? [full, place] : [place, full], opts).finished.then(() => { cells.forEach((el) => el.classList.remove('away')); return f; });
+}
+function openAll(instant) {
+  if (allOpen || flying) return; stopIntro(); touched(); pointed = null;
+  layoutBig(); setWorks();
+  const c = onWheel(shown) ? shown : null, still = REDUCED || instant;
+  // The site you were looking at is brought to the top row, just under the bar, for it to shrink into. From our own line there is no site to shrink,
+  // so the first rows ride in from below instead, over the bend, which shows at once that this is a wheel.
+  if (c) B.at = B.goal = hold(rowOf(c)); else if (!still) B.at = B.goal - 0.8;
+  renderBig();
+  allOpen = true; document.body.classList.add('all-open'); hero.inert = true; all.inert = false; see.setAttribute('aria-expanded', 'true'); paint(); CLIENTS.forEach((c) => { if (c.layer.pause) c.layer.pause(); });
+  const cells = c && piecesOf(c);
+  if (cells && !still) { flying = true; fly(c, cells, true).then((f) => { f.remove(); flying = false; }); }
+}
+// to: the client whose picture was chosen. Without one (Close, or Escape) the small wheel is where you left it.
+function closeAll(to) {
+  if (!allOpen || flying) return;
+  if (to) { at = goal = rest = nearest(list.indexOf(to)); wheeling = 0; pool.forEach((p) => { p.i = null; }); show(to); showBehind(to, true); if (to.layer.play) { try { to.layer.currentTime = 0; } catch (err) {} } }
+  const c = to || (onWheel(shown) ? shown : null), cells = c && piecesOf(c), box = cells && boxOf(cells), seen = box && box.top < innerHeight && box.top + box.height > 0;
+  allOpen = false; hero.inert = false; all.inert = true; see.setAttribute('aria-expanded', 'false'); setHot(null); paint();
+  if (behind && behind.layer.play && !REDUCED) behind.layer.play().catch(() => {});
+  if (all.contains(document.activeElement)) see.focus({ preventScroll: true });
+  if (seen && !REDUCED) {
+    flying = true;
+    fly(c, cells, false).then((f) => {             // the page is ready underneath, showing the same picture, so the wheel can go at once
+      all.style.transition = 'none'; document.body.classList.remove('all-open'); void all.offsetWidth; all.style.transition = ''; f.remove(); flying = false;
+    });
+  } else document.body.classList.remove('all-open');
+}
+// Work in the bar: across to the gallery wall, to the first picture (the wheel goes back to our own line, which the wall sits to the right of).
+// It opened All Work before (the site on the line shrinking into its place); that view is still here, with ?all.
+// Work in the bar brings you to the work: the first picture in the middle of the window. Our words have a frame of their own, so they are out of view there.
+// (For a while it stopped at the words with the first column beside them: before-intro-alone.html.)
+function wallStart() {
+  const W = innerWidth, a = arts[0];
+  return clamp(a.offsetLeft + (W + a.offsetWidth) / 2, W, S.max);
+}
+function toWall(now) {
+  if (allOpen) closeAll(); stopIntro(); const us = list.indexOf(US); goal = us; touched();
+  F.goal = 0; if (now) { at = rest = us; S.goal = S.cur = wallStart(); F.cur = 0; S.drawn = -1; } else S.goal = wallStart();
+}
+see.onclick = (e) => { e.preventDefault(); toWall(); };
+// turning the big wheel with a finger or a held mouse, choosing a picture, and framing the one the mouse is over
+all.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse' && e.button) return; B.drag = { y: e.clientY, at: B.at, moved: false, id: e.pointerId, v: 0, t: performance.now() }; });
+addEventListener('pointermove', (e) => {
+  const d = B.drag; if (!d || e.pointerId !== d.id) return; const dy = e.clientY - d.y; if (Math.abs(dy) > 6) d.moved = true;
+  if (d.moved) { const now = performance.now(), to = hold(d.at - dy / B.h); d.v = d.v * 0.5 + 0.5 * (to - B.at) / Math.max(4, now - d.t) * 1000; d.t = now; B.at = to; B.goal = to; setHot(null); }      // the wheel follows the finger
+});
+// lifting off while moving, the wheel carries on a little and glides to a stop; a finger that had stopped leaves it where it is
+const dropBig = (e, cancel) => { const d = B.drag; if (!d || (e.pointerId !== undefined && e.pointerId !== d.id)) return; B.goal = hold(B.at + (!cancel && d.moved && performance.now() - d.t < 90 ? clamp(d.v * 0.22, -2.5, 2.5) : 0)); setTimeout(() => { if (B.drag === d) B.drag = null; }, 0); };
+addEventListener('pointerup', (e) => dropBig(e, false)); addEventListener('pointercancel', (e) => dropBig(e, true));
+drum.addEventListener('click', (e) => { const el = e.target.closest('[data-c]'); if (!el || (B.drag && B.drag.moved)) return; closeAll(byFile.get(el.dataset.c)); });
+function setHot(el) {
+  hot.forEach((x) => x.classList.remove('hot')); hot = [];
+  if (!el) return; const strip = el.parentElement, col = [...strip.children].indexOf(el), s = slots.find((x) => x.strips.includes(strip) || x.cap === strip); if (!s) return;
+  hot = s.strips.slice(0, B.ns).map((x) => x.children[col]); hot.forEach((x) => x.classList.add('hot'));
+}
+drum.addEventListener('pointerover', (e) => { if (e.pointerType !== 'mouse' || (B.drag && B.drag.moved)) return; setHot(e.target.closest('[data-c]')); });
+drum.addEventListener('pointerleave', () => setHot(null));
+
+// ---------- PROTOTYPE ONLY: the six designs for the bar and the buttons. B steps through them, 1 to 6 picks one, ?ui=pill opens on one; the choice is remembered on this computer.
+
+// ---------- start once the type has arrived, so the widths are measured in the right face: one spin through every name, landing on "We are CYStudios."
+Promise.all([window.faceReady, window.brandReady]).then(() => document.fonts ? document.fonts.load(`500 18px ${getComputedStyle(document.documentElement).getPropertyValue('--face')}`).catch(() => {}) : null).then(() => {      // the face on the page (Inter, or the one ?face= asks for), and the seal brand's serif when it is on
+  const opens = !q.has('at') && !q.has('nospin') && !REDUCED;
+  if (opens) document.body.classList.add('opening');      // before anything is laid out, so nothing that waits for the end of the roll shows for a moment first
+  layout(); setList('all'); show(US); showBehind(US, true); layoutWall();
+  if (opens) {      // the opening roll: it holds on the first name with its site behind for a moment, then rolls down to ours
+    intro = { t0: Infinity, dur: INTRO, turns: list.indexOf(US), ready: false }; at = 0; opening = true; document.body.classList.add('opening');
+    readyPreviews().then(() => { if (intro) { intro.ready = true; intro.t0 = performance.now() + 350; } });
+  }
+  // for checking: ?at=0 is our own line, ?at=1 the first client (Beauty One), ?at=2 the second, and so on, as before the list was turned round; ?at=3.5 freezes half way between the third and fourth clients
+  if (q.has('at')) { const a = +q.get('at'); at = goal = a < 1 ? list.indexOf(US) : a - 1; rest = Math.round(at); }
+  if (q.has('at') && q.get('at').includes('.')) { wheeling = 1e15; }
+  if (q.has('still')) document.body.classList.add('still');
+  if (q.has('bare')) document.body.classList.add('bare');
+  if (q.has('work')) { history.replaceState(null, '', location.pathname); toWall(true); }      // Work in the bar on another page: arrive on the wall
+  if (q.has('all')) { openAll(true); if (q.has('turn')) { B.at = B.goal = +q.get('turn'); B.dirty = true; } }      // for checking: ?all opens on All Work, &turn=0.5 holds the big wheel half a row round
+  requestAnimationFrame(frame);
+});
+</script>
+<div class="glow" aria-hidden="true"></div>      <!-- the soft violet edge, a trial (see .glow) -->
+</body>
+</html>

@@ -1,0 +1,135 @@
+/* CYStudios: the sideways pages, Services and Contact (2026-11-25). Each opens with our header at the left and its arrow, then numbered columns between hairlines,
+   each pressed to open. Shared here so the two pages keep the same rules (moved out of services.html, as it was: before-shared-columns-services.html).
+   Each page links it after pages.css, and adds what is its own. */
+/* Services (2026-11-25, after a reference the user shared: a header at the left, an arrow, numbered columns between hairlines; what we offer from cy-studios.com/services).
+   The page runs sideways: our header, its arrow pointing on, one column for each way of working with us, 1 Websites, 2 Social media, 3 the two together, then the free
+   call. Each column keeps the same places, level from one to the next: its number at the top, then what it costs, its name, what it is made of, its pictures and a few words.
+   Press a column to open it (the user: "press to expand not hover"): it grows, the columns after it move along, its number and name move across to about 60% of it,
+   still left aligned, a description appears at the top right, and its pictures give way to its plans, set as cards (after the pricing cards the user shared, in our paper,
+   ink and violet). Press it again, or another, to close it. Pointing at a column only lights its edges from inside, softly, in our violet, so you can see it can be
+   pressed. On a phone the columns stand one under another. Every size, space and padding is a multiple of 2 or 4.
+   (Hover to open, with all nine sites printed in each picture and a price board, just before: before-press-cards.html; the empty page: before-services-columns.html.) */
+:root { --rest: 280px; --intro: 480px; --pad: 24px; --num: color-mix(in srgb, var(--ink) 18%, var(--page)); --plate: #FAF9F5; --ease: cubic-bezier(0, 0, .2, 1); --head: 110px; }
+.sv-col { --to: calc((var(--rest) + var(--more)) * .58); }
+html, body { height: 100%; overflow: hidden; }
+.sv-view { position: fixed; top: 0; right: 0; bottom: 0; left: 0; overflow: hidden; touch-action: pan-y; }
+@media (min-width: 901px) { .sv-view { left: 112px; -webkit-mask: linear-gradient(90deg, transparent, #000 32px); mask: linear-gradient(90deg, transparent, #000 32px); } }      /* clear of the words down the side; what passes them fades */
+@media (max-width: 900px) { .sv-view { bottom: calc(var(--bar-b, 68px) + 8px); } }      /* above our words along the foot */
+.sv-track { position: absolute; top: 0; bottom: 0; left: 0; display: flex; will-change: transform; }
+
+/* ---------- the header */
+.sv-intro { position: relative; flex: none; width: var(--intro); }
+.sv-blurb { position: absolute; top: calc(var(--top) + 8px); left: 32px; max-width: 240px; margin: 0; font: 500 12px/16px var(--face); color: var(--grey); }
+.sv-lede { position: absolute; left: 32px; right: 64px; top: 38%; }
+.sv-lede h1 { margin: 0 0 12px; font: 500 40px/44px var(--face); letter-spacing: -.02em; color: var(--ink); }
+.sv-lede p { margin: 0; max-width: 20em; font: 500 18px/26px var(--face); color: var(--grey); }
+.sv-foot { position: absolute; left: 32px; bottom: var(--edge-b); margin: 0; font: 500 14px/20px var(--face); }
+.sv-arrow { position: absolute; right: 24px; top: calc(38% + 16px); color: var(--ink); animation: sv-nudge 1.6s cubic-bezier(.37, 0, .63, 1) infinite; }      /* the one arrow, nudging on, level with "Services" */
+@keyframes sv-nudge { 50% { translate: 4px 0; } }
+.sv-link { color: var(--accent); text-decoration: none; }
+.sv-link .arw { margin-left: 4px; }
+@media (hover: hover) { .sv-link:hover { text-decoration: underline; text-underline-offset: 4px; } }
+
+/* ---------- a column */
+.sv-col { position: relative; flex: none; width: var(--rest); border-left: 1px solid var(--line); overflow: hidden; cursor: pointer; transition: width .5s var(--ease); }
+.sv-col.open { width: calc(var(--rest) + var(--more)); cursor: default; }
+.sv-col::after { content: ''; position: absolute; inset: 0; z-index: 4; pointer-events: none; box-shadow: inset 0 0 0 1px transparent, inset 0 0 40px -16px transparent; transition: box-shadow .3s ease; }
+@media (hover: hover) { .sv-col:hover::after { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 36%, transparent), inset 0 0 40px -16px color-mix(in srgb, var(--accent) 48%, transparent); } }      /* pointed at: its edges light softly from inside, in our violet */
+.sv-col:has(.sv-open:focus-visible)::after { box-shadow: inset 0 0 0 2px var(--accent); }
+.sv-num { position: absolute; top: calc(var(--top) + 4px); left: var(--pad); margin: 0; font: 500 48px/48px var(--face); letter-spacing: -.02em; color: var(--num); transition: color .5s var(--ease), left .5s var(--ease); }
+.sv-head { position: absolute; top: 38%; left: var(--pad); width: calc(var(--rest) - var(--pad) * 2); transition: left .5s var(--ease); }
+.sv-col.open .sv-num { color: var(--ink); left: var(--to); }
+.sv-col.open .sv-head { left: var(--to); }      /* --to: 58% of the open column, whatever its width on the way there */
+.sv-when { display: flex; align-items: flex-end; min-height: 32px; margin: 0 0 4px; font: 500 12px/16px var(--face); color: var(--grey); }      /* room for two lines, so every name stands level */
+.sv-title { margin: 0 0 24px; font: 500 18px/26px var(--face); color: var(--ink); }
+.sv-open { all: unset; cursor: pointer; }
+.sv-kind { margin: 0 0 8px; font: 500 12px/16px var(--face); color: var(--ink); }
+/* the description, at the top right once it is open, under its number */
+.sv-desc { position: absolute; top: calc(var(--top) + 4px + 48px + 16px); left: var(--to); width: calc(var(--rest) + var(--more) - var(--to) - var(--pad)); max-height: calc(38% - var(--top) - 84px); overflow: hidden; margin: 0;
+           font: 500 14px/20px var(--face); color: var(--grey); opacity: 0; transition: opacity .2s ease; }
+.sv-desc.small { font-size: 12px; line-height: 16px; }
+.sv-col.open .sv-desc { opacity: 1; transition: opacity .4s ease .2s; }
+
+/* its pictures and a few words, at rest; they give way to the plans when it opens */
+.sv-rest { position: absolute; top: calc(38% + var(--head)); left: var(--pad); width: calc(var(--rest) - var(--pad) * 2); transition: opacity .25s ease; }
+.sv-col.open .sv-rest { opacity: 0; pointer-events: none; }
+.sv-media { display: flex; gap: 4px; aspect-ratio: 16 / 10; }
+.sv-media > * { position: relative; overflow: hidden; background: var(--plate) radial-gradient(circle, color-mix(in srgb, var(--accent) 24%, transparent) 0 1px, transparent 1.4px) 0 0 / 6px 6px; box-shadow: 0 0 0 1px rgba(23, 28, 12, .06); }
+.sv-media img, .sv-media video { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; -webkit-user-drag: none; }
+.sv-media .site { flex: 1 1 0; }
+.sv-media .reel { flex: none; aspect-ratio: 9 / 16; height: 100%; }
+.sv-media .reel video, .sv-media .reel img { object-position: center; }
+.sv-text { margin: 12px 0 0; font: 500 14px/20px var(--face); color: var(--grey); }
+
+/* ---------- its plans, as cards: in the pictures' place, the whole width of the open column */
+.sv-plans { position: absolute; top: calc(38% + var(--head)); bottom: var(--edge-b); left: var(--pad); right: var(--pad); display: flex; flex-direction: column; gap: 8px;
+            opacity: 0; translate: 0 8px; transition: opacity .2s ease, translate .2s ease; pointer-events: none; }
+.sv-col.open .sv-plans { opacity: 1; translate: 0 0; transition: opacity .4s ease .2s, translate .5s var(--ease) .2s; pointer-events: auto; }
+.sv-deck { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; overflow-y: auto; scrollbar-width: none; }
+.sv-deck::-webkit-scrollbar { display: none; }
+.sv-card { position: relative; display: flex; flex-direction: column; min-height: 0; padding: 16px; background: var(--plate); box-shadow: inset 0 0 0 1px var(--line); color: var(--ink); }
+.sv-card.pick { background: radial-gradient(120% 56% at 50% 0, color-mix(in srgb, var(--accent) 14%, transparent), transparent 72%), var(--plate);
+                box-shadow: inset 0 0 0 1px var(--accent), inset 0 0 32px -16px color-mix(in srgb, var(--accent) 50%, transparent); }      /* the one to look at: lit in our violet, as the pricing cards light theirs */
+.sv-card h3 { margin: 0; font: 500 16px/20px var(--face); }
+.sv-card .tag { position: absolute; top: 16px; right: 16px; padding: 0 8px; font: 500 12px/20px var(--face); color: var(--accent); background: var(--wash); }
+.sv-card .bill { margin: 2px 0 12px; font: 500 12px/16px var(--face); color: var(--grey); }
+.sv-card .price { margin: 0; font: 500 32px/36px var(--face); letter-spacing: -.02em; font-variant-numeric: lining-nums; }
+.sv-card .price small { margin-left: 4px; font: 500 14px/20px var(--face); letter-spacing: 0; color: var(--grey); }
+.sv-card .price small.pre { margin: 0 4px 0 0; }
+.sv-card .for { margin: 8px 0 12px; font: 500 12px/16px var(--face); color: var(--grey); }
+.sv-card hr { flex: none; width: 100%; height: 1px; margin: 0 0 8px; border: 0; background: var(--line); }
+.sv-card ul { flex: 1 1 auto; margin: 0 0 12px; padding: 0; list-style: none; }
+.sv-card li { display: flex; gap: 8px; margin: 0 0 4px; font: 500 14px/20px var(--face); }
+.sv-card li::before { content: ''; flex: none; width: 16px; height: 16px; margin-top: 2px; border-radius: 50%;
+                      background: var(--wash) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M4.6 8.3l2.2 2.2 4.6-4.8' fill='none' stroke='%235F48DA' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>") center / 16px 16px no-repeat; }      /* included: a violet tick */
+.sv-card .go { flex: none; display: flex; align-items: center; justify-content: center; gap: 4px; height: 40px; font: 500 14px/20px var(--face); text-decoration: none; color: var(--ink); background: color-mix(in srgb, var(--ink) 6%, transparent); transition: filter .2s ease, background-color .2s ease; }
+.sv-card.pick .go { background: var(--accent); color: var(--on-accent); }
+@media (hover: hover) { .sv-card .go:hover { background: color-mix(in srgb, var(--ink) 10%, transparent); } .sv-card.pick .go:hover { background: var(--accent); filter: brightness(1.1); } }
+.sv-extra { flex: none; margin: 0; font: 500 12px/16px var(--face); color: var(--grey); }
+/* a window not tall enough for them as they are: the cards are set closer, and if they still do not fit, they scroll inside */
+@media (min-width: 641px) and (max-height: 860px) {
+  .sv-card { padding: 12px; } .sv-card .tag { top: 12px; right: 12px; }
+  .sv-card .bill { margin-bottom: 8px; } .sv-card .price { font-size: 24px; line-height: 28px; } .sv-card .for { margin: 4px 0 8px; }
+  .sv-card hr { margin-bottom: 8px; } .sv-card ul { margin-bottom: 12px; } .sv-card li { margin-bottom: 2px; font-size: 12px; line-height: 16px; } .sv-card li::before { margin-top: 0; }
+  .sv-card .go { height: 32px; font-size: 12px; }
+}
+/* a short window (under 760px): the names, and "Services" with them, stand a little higher, at 30%, so the plans have the room below; each card leaves out its one-line summary */
+@media (min-width: 641px) and (max-height: 760px) {
+  .sv-lede, .sv-head { top: 30%; } .sv-arrow { top: calc(30% + 16px); }
+  .sv-rest, .sv-plans { top: calc(30% + var(--head)); }
+  .sv-desc { max-height: calc(30% - var(--top) - 84px); }
+  .sv-card .for { display: none; } .sv-card .price { margin-bottom: 8px; }
+}
+
+/* ---------- the end: the free call */
+.sv-end { position: relative; flex: none; width: calc(var(--rest) + 40px); border-left: 1px solid var(--line); }
+.sv-end .sv-head { width: calc(var(--rest) - var(--pad) * 2 + 16px); }
+.sv-end .sv-text { margin-top: 0; }
+.sv-end .btn { margin-top: 24px; }
+.sv-end .btn .arw { margin-left: 2px; }
+
+/* ---------- where you are: a hairline at the foot, the part in view in ink */
+.sv-where { position: absolute; left: 32px; right: 32px; bottom: 8px; height: 2px; background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.sv-where i { position: absolute; top: 0; bottom: 0; left: 0; width: 0; background: var(--ink); opacity: .5; }
+
+@media (prefers-reduced-motion: reduce) { .sv-col, .sv-num, .sv-head, .sv-desc, .sv-rest, .sv-plans, .sv-col::after { transition: none !important; } .sv-arrow { animation: none; } }
+
+/* ---------- a phone: one column under another; a press opens one */
+@media (max-width: 640px) {
+  html, body { height: auto; overflow: visible; }
+  .sv-view { position: static; overflow: visible; -webkit-mask: none; mask: none; }
+  .sv-track { position: static; display: block; transform: none !important; padding: 0 var(--edge); }
+  .sv-intro { width: auto; padding: calc(var(--top) + 8px) 0 40px; }
+  .sv-blurb, .sv-lede, .sv-foot { position: static; }
+  .sv-lede { margin: 64px 0 16px; }
+  .sv-arrow { display: none; }
+  .sv-col, .sv-end { width: auto !important; border-left: 0; border-top: 1px solid var(--line); padding: 24px 0 32px; overflow: visible; }
+  .sv-num, .sv-head, .sv-desc, .sv-rest, .sv-plans { position: static; width: auto !important; max-height: none; }
+  .sv-col.open .sv-num, .sv-col.open .sv-head { left: auto; }
+  .sv-num { margin-bottom: 24px; }
+  .sv-desc { display: none; } .sv-col.open .sv-desc { display: block; margin: 0 0 16px; opacity: 1; }
+  .sv-col.open .sv-rest { display: none; }
+  .sv-plans { display: none; translate: none; } .sv-col.open .sv-plans { display: flex; }
+  .sv-deck { grid-template-columns: minmax(0, 1fr); overflow: visible; }
+  .sv-where { display: none; }
+}
