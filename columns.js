@@ -15,7 +15,7 @@
   // each reel is its video if we have it, else a still from it: the VisiDAW reel (a light copy of the user's file); the Boyang reel on Instagram, as a frame captured from it
   // (2026-11-25, the user: "go to the link and take a screenshot of the cover photo and use it"; the cover itself has Instagram's play button printed on it, so a clean frame
   // from the same moment, "from Korea", stands for it). If its video is ever saved as reel-2.mp4, that is shown instead.
-  const REELS = [['assets/social/reel.mp4', 'assets/social/reel.jpg'], ['assets/social/reel-2.mp4', 'assets/social/reel-2.jpg']];
+  const REELS = [['assets/social/reel.mp4', 'assets/social/reel.jpg'], ['assets/social/reel-2.jpg']];      // (put 'assets/social/reel-2.mp4' first in the second if its video is ever saved; asking for a file that is not there leaves an error in the browser's console)
   const shuffle = (list) => list.map((v) => [Math.random(), v]).sort((p, q) => p[0] - q[0]).map((p) => p[1]);
   const sites = shuffle(SITES), siteFor = { websites: sites[0], both: sites[1] };      // two different sites
   const there = (src) => fetch(src, { method: 'HEAD' }).then((r) => r.ok).catch(() => false);
