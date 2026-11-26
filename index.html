@@ -743,7 +743,7 @@ function formStrip(delay) {
   };
   requestAnimationFrame(step);
 }
-function stopIntro() { if (intro) { intro = null; goal = rest = Math.round(at); } }
+function stopIntro() { if (intro) { intro = null; goal = rest = Math.round(at); if (behind && behind.layer.play && !REDUCED && !allOpen) behind.layer.play().catch(() => {}); } }      // cut short: the site it stopped on plays its film
 // Once the opening roll has settled, everything round the wheel is pushed in from outside the window, one after another (2026-11-25, the user: "like they were displaced
 // outside of the screen and got pushed in ... starting from our logo all the way to clients' stories ... a steep ease out"). Each starts just past the edge nearest it, out of
 // sight, and comes in to its place: the logo, Work, Services, About and Contact from the left (from the foot on a narrower window, where they stand along it), the line from
@@ -820,8 +820,12 @@ function showBehind(e, atOnce) {
     }
     if (e.p === 0) { e.z = ++stack; e.layer.style.zIndex = e.z; }          // a site not yet on screen goes on top of the pile; one already showing stays where it is and what is over it fades away
     LAYERS.forEach((c) => { c.rising = c === e || (c.z < e.z && c.rising && c.p >= 0.3); });      // 0.3 of the way through the fade is about half strength
-    if (e.layer.play && !REDUCED && !allOpen && !q.has('bare')) e.layer.play().catch(() => {});      // its film starts at once (not behind a mock-up, which wants the top of the site held still)
-    hero.classList.toggle('on-paper', paperBehind()); paint();
+    // its film starts at once (not behind a mock-up, which wants the top of the site held still). Not during the opening roll (2026-11-26, the user: the roll "feels like
+    // there are moments of stagger"): there each site is up for a moment only, and starting a film wakes a video decoder, nine in two seconds, so the roll skipped.
+    // There each site shows its still, which is its film's first frame; the films play as before once the roll is over. (Films during the roll: before-smooth-roll.html.)
+    if (e.layer.play && !REDUCED && !allOpen && !q.has('bare') && !intro) e.layer.play().catch(() => {});
+    hero.classList.toggle('on-paper', paperBehind()); paint();      // paper or a site behind: the veil over the site and the colour of the names follow it, during the roll too
+    // (Skipping this during the roll, 2026-11-26, left the veil off and the names in ink over the sites, so they flashed and the names faded: before-roll-veil.html.)
   }
   if (atOnce) { LAYERS.forEach((c) => { c.p = c === e ? 1 : 0; c.rising = false; c.from = false; }); C.site = !e.us; e.z = ++stack; e.layer.style.zIndex = e.z; fadeBehind(0); hero.classList.toggle('on-paper', paperBehind()); }
 }
