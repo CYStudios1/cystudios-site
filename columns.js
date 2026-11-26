@@ -66,6 +66,13 @@
     });
   });
   addEventListener('keydown', (e) => { if (e.key === 'Escape' && open) { const c = open; setOpen(null); c.querySelector('.sv-open').focus(); } });
+  // Tab to a part out of view: the page moves along until it is in view, 32px clear of the edge (2026-11-26, a fix: the view is clipped now, so it cannot scroll by itself)
+  view.addEventListener('focusin', (e) => {
+    if (phone()) return;
+    const r = e.target.getBoundingClientRect(), v = view.getBoundingClientRect(), pad = 32;
+    if (r.right > v.right - pad) goal = clamp(x + r.right - (v.right - pad), 0, max);
+    else if (r.left < v.left + pad) goal = clamp(x - (v.left + pad - r.left), 0, max);
+  });
 
   // ---------- going sideways: the wheel (either way), a trackpad, dragging, and the arrow keys; it glides there, as the wall on home does
   view.addEventListener('wheel', (e) => {

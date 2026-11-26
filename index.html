@@ -23,6 +23,9 @@
   l.href = fontshare[f] ? `https://api.fontshare.com/v2/css?f[]=${fontshare[f]}@400,500&display=swap` : `https://fonts.googleapis.com/css2?family=${f.replace(/ /g, '+')}:wght@400;500&display=swap`;
   window.faceReady = new Promise((ok) => { l.onload = l.onerror = ok; }); document.head.append(l);
 })();
+// The opening roll hides the words round the wheel until it settles. Hidden from the very first paint (2026-11-26, a fix): before, they showed for a moment while the type
+// loaded, then vanished, then came back in when the roll was over. Arriving with ?work (Work on another page) has no roll: the words stay where they are.
+if (!/[?&](at|nospin|work)(=|&|$)/.test(location.search) && !matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('opening');
 </script>
 <style>
   :root {
@@ -41,7 +44,7 @@
     --txt: var(--page);                               /* the sentence is paper over a client's site, and ink on the bare page */
   }
   * { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; overflow: hidden; overscroll-behavior: none; background: var(--ink); }      /* one black: our ink (it was a darker near-black, #12130F) */
+  html, body { height: 100%; margin: 0; overflow: hidden; overscroll-behavior: none; background: var(--page); }      /* our paper, as the other pages have (2026-11-26, a fix: it was our ink, which showed as a black screen for a moment while the page loaded; nothing else ever shows it, as the hero always covers it) */
   @media (min-width: 1000px) { :root { --fs: 18px; } }      /* a wide window: the sentence one step larger, so it holds the middle of a big screen */
   /* a phone: slightly larger words (it is the whole page), and everything a thumb's width from the edge and clear of the notch and the home bar */
   @media (max-width: 640px) { :root { --fs: 18px; --edge: 16px; --edge-b: max(16px, env(safe-area-inset-bottom)); --top: max(14px, env(safe-area-inset-top)); } }
@@ -142,7 +145,7 @@
      and not during the opening roll. */
   .glow { position: fixed; inset: 0; z-index: 7; pointer-events: none; opacity: 0; transition: opacity .6s ease;
           box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent), inset 0 0 96px -32px color-mix(in srgb, var(--accent) 26%, transparent); }
-  body.on-paper:not(.opening) .glow { opacity: 1; }
+  html:not(.opening) body.on-paper:not(.opening) .glow { opacity: 1; }      /* (the opening is marked on the page itself from its first paint, and on the body once the script runs) */
   .veil { position: absolute; inset: 0; pointer-events: none; opacity: 1; transition: opacity .6s ease; --dim: 1;
           background: linear-gradient(to bottom, rgba(12, 13, 10, calc(.52 * var(--dim))), rgba(12, 13, 10, calc(.7 * var(--dim))) 50%, rgba(12, 13, 10, calc(.52 * var(--dim)))); }
   .on-paper .veil { opacity: 0; }
@@ -398,6 +401,7 @@
   .book .more { display: inline-block; vertical-align: top; max-width: 0; overflow: hidden; }
   .book.ready .more { transition: max-width .5s cubic-bezier(0, 0, .2, 1); }
   .book.stack { white-space: normal; text-align: center; } .book.stack .b-in { width: min-content; }      /* a phone's tile: "Book" over its arrow */
+  .book.stack .more { white-space: nowrap; }      /* (a fix, 2026-11-26: the hidden "a free call" wrapped a word to a line, three lines tall, which pushed "Book" to the tile's top edge and its arrow to the foot) */
   .book.stack:focus-visible { white-space: nowrap; } .book.stack:focus-visible .b-in { width: auto; }      /* opened from the keyboard, all of it on one line */
   /* As it opens, the pictures make room for it and stay side by side (2026-11-25, the user: "the images should move as well and stay next to each other"; it opened over
      them before: before-book-push.html): the row grows and moves back by half as much, so it grows the same either side and its middle stays in the middle of the window.
@@ -460,7 +464,7 @@
   <div id="media" aria-hidden="true"></div>
   <div class="veil" aria-hidden="true"></div>
   <h1 class="sr-only" id="said" aria-live="polite">We are CYStudios.</h1>
-  <div class="fade" id="lineFade"><div class="line" id="line" aria-hidden="true">
+  <div class="fade" id="lineFade"><div class="line" id="line" aria-hidden="true" style="visibility: hidden"><!-- (shown once it is laid out: see layout. Before, its full stop showed for a moment at the window's left edge while the type loaded) -->
     <div class="lead" id="lead"><span class="say">We are</span><span class="say">This is</span><span class="say">This is</span></div>
     <div class="roll" id="roll"></div>
     <span class="tail" id="tail"><b>.</b></span>
@@ -602,6 +606,7 @@ function layout() {
   const left = clamp(innerWidth / 2 - (leadW + gap + widthOf(US.label) / 2), 16, Math.max(16, innerWidth - 16 - furthest));
   rollX = leadW + gap; line.style.left = `${left}px`; lead.style.width = `${leadW}px`; roll.style.left = `${rollX}px`; roll.style.width = `${longest}px`;
   line.dataset.gap = gap; fitHalf(); layoutStrip();
+  line.style.visibility = '';      // laid out: it can show now
 }
 // How many names show each side of the line: four, fewer if the list is short (so none appears twice) or the window is too short to hold them between the bar and the bottom row.
 const reach = (h) => Math.sin(h * STEP) * (pitch / STEP) + lh;
@@ -685,12 +690,15 @@ function layoutStrip() {
   const inner = bookBtn.querySelector('.b-in'), more = bookBtn.querySelector('.more');
   bookBtn.style.setProperty('--rest-w', `${tw}px`); bookBtn.style.height = `${th}px`; bookBtn.classList.remove('stack');
   const fits = [14, 12, 10].some((fs) => { bookBtn.style.fontSize = `${fs}px`; bookBtn.style.lineHeight = `${fs + 4}px`; return inner.getBoundingClientRect().width + 12 <= tw; });
-  if (!fits) { bookBtn.style.fontSize = '12px'; bookBtn.style.lineHeight = '16px'; }
+  // "Book" over its arrow needs two lines; a tile too low for them (a phone turned sideways) has "Book →" on one line at 10px instead, which fits there
+  // (a fix, 2026-11-26: the two lines ran out of the low tile and it showed blank)
+  const stack = !fits && th >= 2 * 16 + 8;
+  if (!fits) { const fs = stack ? 12 : 10; bookBtn.style.fontSize = `${fs}px`; bookBtn.style.lineHeight = `${fs + 4}px`; }
   const moreW = Math.ceil(more.scrollWidth), openW = 2 * Math.ceil((inner.getBoundingClientRect().width + moreW + 32) / 2);      // all of it on one line, 16px clear each side, to the even pixel
   bookBtn.style.setProperty('--more-w', `${moreW}px`); bookBtn.style.setProperty('--open-w', `${Math.max(openW, tw)}px`);
   strip.style.setProperty('--grow', `${Math.max(openW, tw) - tw}px`);      // how much longer the row is while it is open
   thumbs.forEach((b, i) => { const far = Math.abs((i < BOOK_AT ? i : i + 1) - BOOK_AT); b.style.setProperty('--d', `${(far - 1) * 60}ms`); });      // the two beside it develop first
-  bookBtn.classList.toggle('stack', !fits);
+  bookBtn.classList.toggle('stack', stack);
   if (!bookBtn.classList.contains('ready')) requestAnimationFrame(() => requestAnimationFrame(() => bookBtn.classList.add('ready')));
   hero.style.setProperty('--say-end', `${Math.round(top + th)}px`); placeOurStory();
   thumbs.forEach((b) => { b.style.width = `${tw}px`; b.style.height = `${th}px`; b._w = tw; b._h = th; const src = poster(b.c); if (b.im.getAttribute('src') !== src) b.im.src = src; });
@@ -751,7 +759,7 @@ function stopIntro() { if (intro) { intro = null; goal = rest = Math.round(at); 
 // then a long settle: about two thirds of the way in the first 50ms (steeper since 2026-11-25; the first curve, .1 .9 .15 1, in before-steeper.html). (Dropping in out of a blur, from the logo down, before: before-pushed-in.html.)
 const INTRO = +q.get('introdur') || 2300;
 function arrive() {
-  opening = false; document.body.classList.remove('opening');
+  opening = false; document.body.classList.remove('opening'); document.documentElement.classList.remove('opening');
   if (REDUCED) return;
   const nav = document.querySelector('.nav'), W = innerWidth, H = innerHeight, side = W > 900, STEEP = 'cubic-bezier(.02, 1, .05, 1)', STEP = +q.get('pushstep') || 90, OUT = 12, TIME = 1400;      // a little slower since 2026-11-25 (1s and 70ms apart before: before-slower-push.html)
   const from = { left: (r) => `${-(r.right + OUT)}px 0`, right: (r) => `${W - r.left + OUT}px 0`, top: (r) => `0 ${-(r.bottom + OUT)}px`, bottom: (r) => `0 ${H - r.top + OUT}px` };
@@ -1642,8 +1650,9 @@ drum.addEventListener('pointerleave', () => setHot(null));
 
 // ---------- start once the type has arrived, so the widths are measured in the right face: one spin through every name, landing on "We are CYStudios."
 Promise.all([window.faceReady, window.brandReady]).then(() => document.fonts ? document.fonts.load(`500 18px ${getComputedStyle(document.documentElement).getPropertyValue('--face')}`).catch(() => {}) : null).then(() => {      // the face on the page (Inter, or the one ?face= asks for), and the seal brand's serif when it is on
-  const opens = !q.has('at') && !q.has('nospin') && !REDUCED;
+  const opens = !q.has('at') && !q.has('nospin') && !q.has('work') && !REDUCED;      // arriving on the wall from another page (?work) there is no roll (2026-11-26, a fix: the roll was cut short at once, so the words round the wheel blinked out and were pushed back in)
   if (opens) document.body.classList.add('opening');      // before anything is laid out, so nothing that waits for the end of the roll shows for a moment first
+  else document.documentElement.classList.remove('opening');      // (the head marks it from the first paint; this is the last word)
   layout(); setList('all'); show(US); showBehind(US, true); layoutWall();
   if (opens) {      // the opening roll: it holds on the first name with its site behind for a moment, then rolls down to ours
     intro = { t0: Infinity, dur: INTRO, turns: list.indexOf(US), ready: false }; at = 0; opening = true; document.body.classList.add('opening');

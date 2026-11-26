@@ -12,7 +12,7 @@
 :root { --rest: 280px; --intro: 480px; --pad: 24px; --num: color-mix(in srgb, var(--ink) 18%, var(--page)); --plate: #FAF9F5; --ease: cubic-bezier(0, 0, .2, 1); --head: 110px; }
 .sv-col { --to: calc((var(--rest) + var(--more)) * .58); }
 html, body { height: 100%; overflow: hidden; }
-.sv-view { position: fixed; top: 0; right: 0; bottom: 0; left: 0; overflow: hidden; touch-action: pan-y; }
+.sv-view { position: fixed; top: 0; right: 0; bottom: 0; left: 0; overflow: hidden; overflow: clip; touch-action: pan-y; }      /* clip, not only hidden (a fix, 2026-11-26): a hidden box can still be scrolled, and Tab to a part out of view scrolled it, shoving the page aside for good. The script brings a focused part into view instead */
 @media (min-width: 901px) { .sv-view { left: 112px; -webkit-mask: linear-gradient(90deg, transparent, #000 32px); mask: linear-gradient(90deg, transparent, #000 32px); } }      /* clear of the words down the side; what passes them fades */
 @media (max-width: 900px) { .sv-view { bottom: calc(var(--bar-b, 68px) + 8px); } }      /* above our words along the foot */
 .sv-track { position: absolute; top: 0; bottom: 0; left: 0; display: flex; will-change: transform; }
@@ -63,8 +63,8 @@ html, body { height: 100%; overflow: hidden; }
 
 /* ---------- its plans, as cards: in the pictures' place, the whole width of the open column */
 .sv-plans { position: absolute; top: calc(38% + var(--head)); bottom: var(--edge-b); left: var(--pad); right: var(--pad); display: flex; flex-direction: column; gap: 8px;
-            opacity: 0; translate: 0 8px; transition: opacity .2s ease, translate .2s ease; pointer-events: none; }
-.sv-col.open .sv-plans { opacity: 1; translate: 0 0; transition: opacity .4s ease .2s, translate .5s var(--ease) .2s; pointer-events: auto; }
+            opacity: 0; translate: 0 8px; transition: opacity .2s ease, translate .2s ease, visibility 0s linear .2s; pointer-events: none; visibility: hidden; }      /* hidden as well as clear (a fix, 2026-11-26), so Tab does not stop on the cards and the letter of a closed column */
+.sv-col.open .sv-plans { opacity: 1; translate: 0 0; transition: opacity .4s ease .2s, translate .5s var(--ease) .2s, visibility 0s; pointer-events: auto; visibility: visible; }
 .sv-deck { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; overflow-y: auto; scrollbar-width: none; }
 .sv-deck::-webkit-scrollbar { display: none; }
 .sv-card { position: relative; display: flex; flex-direction: column; min-height: 0; padding: 16px; background: var(--plate); box-shadow: inset 0 0 0 1px var(--line); color: var(--ink); }
