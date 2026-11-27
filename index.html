@@ -1268,9 +1268,12 @@ function stepCard(dt, now) {
   // in the card the site is a little smaller, so its whole width shows, top to the card's top: it grows with the card as the card grows.
   // A site on its way out of the sheet is shown in a rectangle between its frame and the card, with corners that round as it becomes a screen.
   const inCard = showIn(card, true);
+  // Only the sites on screen are moved (2026-11-26, a fix: every site was moved and clipped afresh on every frame, the ones not showing too, and each film once played
+  // kept its picture, so after a few clients the card stuttered as it grew). One not showing keeps its last place until it is behind the sentence again, which redraws all this.
   CLIENTS.forEach((c) => {
     const R = rising.includes(c) ? mixRect(C.tiles.get(c), card, REDUCED ? 1 : inOut(c.p)) : null, v = R ? showIn(R, true) : inCard;
-    c.rect = R || card; c.layer.style.transform = v.tf; c.layer.style.clipPath = v.clip;
+    c.rect = R || card; if (c !== behind && c.p <= 0) return;
+    c.layer.style.transform = v.tf; c.layer.style.clipPath = v.clip;
   });
   // the site under the sentence: the highest in the pile that is mostly there and reaches the middle of the window. Over it the sentence is paper on the dim, which covers
   // only that site, where it is; with no site under it, the sentence is ink on our paper.
