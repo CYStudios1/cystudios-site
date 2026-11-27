@@ -131,6 +131,10 @@ if (!/[?&](at|nospin|work)(=|&|$)/.test(location.search) && !matchMedia('(prefer
   #media { position: absolute; inset: 0; isolation: isolate; }      /* the layers are piled in an order of their own in here, always under the veil and the sentence */
   /* the script sets each layer's strength (see showBehind): the site arriving fades in over the one already there, which stays whole underneath until it is covered */
   .layer { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; opacity: 0; transform-origin: 0 0; }      /* in the card a site is shown a little smaller, whole across */
+  /* Each film keeps a filter that changes nothing (2026-11-26, a fix: the user saw a flash in Chrome on a Mac as a site grew to fill the window). Once the card had grown
+     and nothing clipped or scaled the film any more, Chrome handed it to the Mac to draw on its own, and took it back when the card drew in again; each change of hands
+     showed as a flash. With the filter, Chrome always draws it itself, so nothing changes hands. (A clip-path that clips nothing does not do this: Chrome sees through it.) */
+  video.layer { filter: brightness(1); }
   .layer.paper { background: var(--paper) var(--page); }      /* our own line: the bare hanji (with ?sheet=1, the proof sheet printed on it) */
   /* the proof sheet (2026-11-25, the user picked it from three written directions; bare paper before: before-proof-sheet.html). Moved to the wall the same day ("place all this there"):
      our line is bare paper again and ?sheet=1 brings the sheet back (before-wall-print.html is the page with it). The script prints it: see "the print" below.
