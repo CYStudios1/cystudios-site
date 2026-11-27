@@ -1387,7 +1387,11 @@ function developWall(dt) {
 
 const toward = (el) => { const W = innerWidth; S.goal = clamp(el.offsetLeft + (W + el.offsetWidth) / 2, W, S.max); F.goal = 0; };      // bring a picture to the middle of the window
 document.getElementById('toWork').onclick = () => toward(arts[0]);
-wall.addEventListener('focusin', (e) => { const a = e.target.closest('.art'); if (a) toward(a); else if (e.target.closest('.intro')) { S.goal = innerWidth; F.goal = 0; } });
+// Only the keyboard moves the page to what it reaches. Coming back to this tab or window, the browser gives focus back to whatever had it, and that is not a move
+// (2026-11-26, a fix: a picture you had clicked, its site open in a new tab, brought the wall round to it again when you came back); nor is a click or a tap.
+let backTo = null; addEventListener('blur', (e) => { if (e.target === window) backTo = document.activeElement; });
+const reached = (e) => { const back = e.target === backTo; backTo = null; return !back && e.target.matches(':focus-visible'); };
+wall.addEventListener('focusin', (e) => { if (!reached(e)) return; const a = e.target.closest('.art'); if (a) toward(a); else if (e.target.closest('.intro')) { S.goal = innerWidth; F.goal = 0; } });
 // a finger or a mouse dragging the wall: left or up moves it on, as a page would; a quick flick carries it on a little
 function startSide(e, axis, s0) { S.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, s0, axis, moved: !!axis, v: 0, t: performance.now() }; }
 wall.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse' && e.button) return; S.dragged = false; startSide(e, null, S.cur + F.cur); });

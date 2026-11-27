@@ -66,9 +66,12 @@
     });
   });
   addEventListener('keydown', (e) => { if (e.key === 'Escape' && open) { const c = open; setOpen(null); c.querySelector('.sv-open').focus(); } });
-  // Tab to a part out of view: the page moves along until it is in view, 32px clear of the edge (2026-11-26, a fix: the view is clipped now, so it cannot scroll by itself)
+  // Tab to a part out of view: the page moves along until it is in view, 32px clear of the edge (2026-11-26, a fix: the view is clipped now, so it cannot scroll by itself).
+  // Only the keyboard moves it: coming back to this tab or window, the browser gives focus back to the column you last pressed, and that is not a move; nor is a click.
+  let backTo = null; addEventListener('blur', (e) => { if (e.target === window) backTo = document.activeElement; });
   view.addEventListener('focusin', (e) => {
-    if (phone()) return;
+    const back = e.target === backTo; backTo = null;
+    if (phone() || back || !e.target.matches(':focus-visible')) return;
     const r = e.target.getBoundingClientRect(), v = view.getBoundingClientRect(), pad = 32;
     if (r.right > v.right - pad) goal = clamp(x + r.right - (v.right - pad), 0, max);
     else if (r.left < v.left + pad) goal = clamp(x - (v.left + pad - r.left), 0, max);
